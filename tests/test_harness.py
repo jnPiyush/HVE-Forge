@@ -34,8 +34,8 @@ class HarnessTests(unittest.TestCase):
         )
         events = [json.loads(line) for line in result.stdout.splitlines()]
         self.assertEqual([event["sequence"] for event in events], list(range(1, len(events) + 1)))
-        self.assertEqual(events[-1]["to"], "completed")
-        self.assertEqual(events[-1]["evidence"]["file"], "greeting.txt")
+        self.assertEqual(events[-1]["payload"]["to"], "completed")
+        self.assertEqual(events[-1]["payload"]["evidence"]["file"], "greeting.txt")
 
     def setUp(self):
         import tempfile

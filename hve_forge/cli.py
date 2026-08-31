@@ -23,7 +23,10 @@ def main() -> None:
             contract = WorkContract("Update fixture greeting", ("greeting.txt",), ("exact greeting",), ("python assertion",))
             task_id = execute_fixture(store, workspace, contract)
             for event in store.events(task_id):
-                print(json.dumps({"taskId": event.task_id, "sequence": event.sequence, "kind": event.kind, **event.payload}, sort_keys=True))
+                print(json.dumps(
+                    {"taskId": event.task_id, "sequence": event.sequence, "kind": event.kind, "payload": event.payload},
+                    sort_keys=True,
+                ))
 
 
 if __name__ == "__main__":

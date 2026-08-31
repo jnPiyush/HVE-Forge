@@ -26,7 +26,7 @@ class Store:
     def create(self, task_id: str) -> None:
         with self.db:
             self.db.execute("INSERT INTO tasks(id, status) VALUES (?, ?)", (task_id, Status.QUEUED))
-            self._append(task_id, "task.created", {"status": Status.QUEUED})
+            self._append(task_id, 1, "task.created", {"status": Status.QUEUED})
 
     def transition(self, task_id: str, target: Status, details: dict | None = None) -> None:
         row = self.db.execute("SELECT status, version FROM tasks WHERE id=?", (task_id,)).fetchone()
@@ -42,7 +42,7 @@ class Store:
             ).rowcount
             if changed != 1:
                 raise RuntimeError("concurrent task update")
-            self._append(task_id, "task.transitioned", {"from": old, "to": target, **(details or {})})
+            self._append(task_id, version + 2, "task.transitioned", {"from": old, "to": target, **(details or {})})
 
     def events(self, task_id: str) -> list[Event]:
         rows = self.db.execute(
@@ -50,8 +50,7 @@ class Store:
         )
         return [Event(task_id, r[0], r[1], json.loads(r[2]), r[3], r[4]) for r in rows]
 
-    def _append(self, task_id: str, kind: str, payload: dict) -> None:
-        sequence = self.db.execute("SELECT COALESCE(MAX(sequence), 0)+1 FROM events WHERE task_id=?", (task_id,)).fetchone()[0]
+    def _append(self, task_id: str, sequence: int, kind: str, payload: dict) -> None:
         event = Event(task_id, sequence, kind, payload, datetime.now(UTC).isoformat())
         self.db.execute(
             "INSERT INTO events VALUES (?, ?, ?, ?, ?, ?)",

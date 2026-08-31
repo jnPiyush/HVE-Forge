@@ -10,6 +10,14 @@ class PolicyError(PermissionError):
 
 def workspace_path(workspace: Path, requested: str) -> Path:
     root = workspace.resolve()
+    relative = Path(requested)
+    if relative.is_absolute() or ".." in relative.parts:
+        raise PolicyError("path escapes the isolated workspace")
+    current = root
+    for part in relative.parts:
+        current /= part
+        if current.is_symlink():
+            raise PolicyError("path traverses a symbolic link")
     candidate = (root / requested).resolve()
     if not candidate.is_relative_to(root):
         raise PolicyError("path escapes the isolated workspace")

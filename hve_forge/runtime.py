@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import sys
 from pathlib import Path
 from uuid import uuid4
 
@@ -29,7 +30,7 @@ def execute_fixture(store: Store, workspace: Path, contract: WorkContract) -> st
     edit = FixtureProvider().edit()
     validate_edit(edit)
     workspace_path(workspace, edit["path"]).write_text(edit["content"])
-    check = run_command(workspace, ["python", "-c", "assert open('greeting.txt').read() == 'Hello, HVE-Forge!\\n'"])
+    check = run_command(workspace, [sys.executable, "-c", "assert open('greeting.txt').read() == 'Hello, HVE-Forge!\\n'"])
     if not check["ok"]:
         store.transition(task_id, Status.FAILED, {"verification": check})
         return task_id
