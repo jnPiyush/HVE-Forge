@@ -26,24 +26,23 @@ class Store:
 
     def create(self, task_id: str) -> None:
         with self.db:
-            self.db.execute("INSERT INTO tasks(id, status, next_sequence) VALUES (?, ?, ?)", (task_id, Status.QUEUED, 1))
+            self.db.execute("INSERT INTO tasks(id, status, next_sequence) VALUES (?, ?, ?)", (task_id, Status.QUEUED, 2))
             self._append(task_id, 1, "task.created", {"status": Status.QUEUED})
 
     def transition(self, task_id: str, target: Status, details: dict | None = None) -> None:
-        row = self.db.execute("SELECT status, version FROM tasks WHERE id=?", (task_id,)).fetchone()
-        if not row:
-            raise KeyError(task_id)
-        old, version = Status(row[0]), row[1]
-        if not may_transition(old, target):
-            raise ValueError(f"invalid transition: {old} -> {target}")
         with self.db:
+            row = self.db.execute("SELECT status, version, next_sequence FROM tasks WHERE id=?", (task_id,)).fetchone()
+            if not row:
+                raise KeyError(task_id)
+            old, version, sequence = Status(row[0]), row[1], row[2]
+            if not may_transition(old, target):
+                raise ValueError(f"invalid transition: {old} -> {target}")
             changed = self.db.execute(
                 "UPDATE tasks SET status=?, version=version+1, next_sequence=next_sequence+1 WHERE id=? AND version=?",
                 (target, task_id, version),
             ).rowcount
             if changed != 1:
                 raise RuntimeError("concurrent task update")
-            sequence = self.db.execute("SELECT next_sequence FROM tasks WHERE id=?", (task_id,)).fetchone()[0]
             self._append(task_id, sequence, "task.transitioned", {**(details or {}), "from": old, "to": target})
 
     def events(self, task_id: str) -> list[Event]:

@@ -35,8 +35,10 @@ def run_command(workspace: Path, argv: list[str], timeout_seconds: int = 30) -> 
     if not argv or not all(isinstance(item, str) for item in argv):
         raise ValueError("command must be a non-empty argv string array")
     # No shell, inherited credentials, or ambient working directory.
+    home = workspace / ".home"
+    home.mkdir(exist_ok=True)
     result = subprocess.run(
         argv, cwd=workspace, shell=False, timeout=timeout_seconds, text=True,
-        capture_output=True, env={"PATH": os.environ.get("PATH", ""), "HOME": str(workspace / ".home")},
+        capture_output=True, env={"PATH": os.environ.get("PATH", ""), "HOME": str(home)},
     )
     return {"ok": result.returncode == 0, "exitCode": result.returncode, "stdout": result.stdout[-8192:], "stderr": result.stderr[-8192:]}
