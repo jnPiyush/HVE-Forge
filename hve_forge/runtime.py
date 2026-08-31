@@ -30,11 +30,12 @@ def execute_fixture(store: Store, workspace: Path, contract: WorkContract) -> st
     edit = FixtureProvider().edit()
     validate_edit(edit)
     workspace_path(workspace, edit["path"]).write_text(edit["content"])
-    check = run_command(workspace, [sys.executable, "-c", "assert open('greeting.txt').read() == 'Hello, HVE-Forge!\\n'"])
+    greeting = workspace / "greeting.txt"
+    check = run_command(workspace, [sys.executable, "-c", f"assert open({str(greeting)!r}).read() == 'Hello, HVE-Forge!\\n'"])
     if not check["ok"]:
         store.transition(task_id, Status.FAILED, {"verification": check})
         return task_id
     store.transition(task_id, Status.REVIEWING, {"verification": check})
-    final_hash = hashlib.sha256((workspace / "greeting.txt").read_bytes()).hexdigest()
+    final_hash = hashlib.sha256(greeting.read_bytes()).hexdigest()
     store.transition(task_id, Status.COMPLETED, {"evidence": {"file": "greeting.txt", "sha256": final_hash}})
     return task_id

@@ -11,6 +11,12 @@ from hve_forge.store import Store
 
 
 class HarnessTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary_directory = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.temporary_directory.cleanup()
+
     def test_transitions_are_fail_closed(self):
         self.assertTrue(may_transition(Status.QUEUED, Status.PREPARING))
         self.assertFalse(may_transition(Status.QUEUED, Status.COMPLETED))
@@ -37,9 +43,3 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual([event["sequence"] for event in events], list(range(1, len(events) + 1)))
         self.assertEqual(events[-1]["payload"]["to"], "completed")
         self.assertEqual(events[-1]["payload"]["evidence"]["file"], "greeting.txt")
-
-    def setUp(self):
-        self.temporary_directory = tempfile.TemporaryDirectory()
-
-    def tearDown(self):
-        self.temporary_directory.cleanup()
