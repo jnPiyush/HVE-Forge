@@ -16,7 +16,8 @@ class Store:
         self.db.execute("PRAGMA journal_mode=WAL")
         self.db.executescript(
             """CREATE TABLE IF NOT EXISTS tasks (
-                id TEXT PRIMARY KEY, status TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 0);
+                id TEXT PRIMARY KEY, status TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 0,
+                next_sequence INTEGER NOT NULL DEFAULT 0);
                CREATE TABLE IF NOT EXISTS events (
                 task_id TEXT NOT NULL, sequence INTEGER NOT NULL, id TEXT NOT NULL UNIQUE,
                 kind TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL,
@@ -25,7 +26,7 @@ class Store:
 
     def create(self, task_id: str) -> None:
         with self.db:
-            self.db.execute("INSERT INTO tasks(id, status) VALUES (?, ?)", (task_id, Status.QUEUED))
+            self.db.execute("INSERT INTO tasks(id, status, next_sequence) VALUES (?, ?, ?)", (task_id, Status.QUEUED, 1))
             self._append(task_id, 1, "task.created", {"status": Status.QUEUED})
 
     def transition(self, task_id: str, target: Status, details: dict | None = None) -> None:
@@ -37,12 +38,13 @@ class Store:
             raise ValueError(f"invalid transition: {old} -> {target}")
         with self.db:
             changed = self.db.execute(
-                "UPDATE tasks SET status=?, version=version+1 WHERE id=? AND version=?",
+                "UPDATE tasks SET status=?, version=version+1, next_sequence=next_sequence+1 WHERE id=? AND version=?",
                 (target, task_id, version),
             ).rowcount
             if changed != 1:
                 raise RuntimeError("concurrent task update")
-            self._append(task_id, version + 2, "task.transitioned", {"from": old, "to": target, **(details or {})})
+            sequence = self.db.execute("SELECT next_sequence FROM tasks WHERE id=?", (task_id,)).fetchone()[0]
+            self._append(task_id, sequence, "task.transitioned", {**(details or {}), "from": old, "to": target})
 
     def events(self, task_id: str) -> list[Event]:
         rows = self.db.execute(

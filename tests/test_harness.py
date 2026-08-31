@@ -1,6 +1,7 @@
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -38,7 +39,6 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual(events[-1]["payload"]["evidence"]["file"], "greeting.txt")
 
     def setUp(self):
-        import tempfile
         self.temporary_directory = tempfile.TemporaryDirectory()
 
     def tearDown(self):
