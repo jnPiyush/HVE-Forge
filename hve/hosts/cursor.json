@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "hostId": "cursor",
+  "profileVersion": "1.1.0",
+  "enforcementTier": "declarative",
+  "agentDirectory": ".cursor/agents",
+  "agentSuffix": ".md",
+  "ruleDirectory": ".cursor/rules",
+  "ruleSuffix": ".mdc",
+  "scanRoots": ["AGENTS.md", ".agents/skills", ".cursor/skills", ".claude/skills", ".codex/skills", ".cursor/agents", ".claude/agents", ".codex/agents", ".cursor/rules"],
+  "supportsHooks": true,
+  "hooksEnabledByDefault": false,
+  "supportsMcp": true
+}

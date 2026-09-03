@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hve-forge:schema:v1:projection",
+  "title": "HVE Forge Run Projection v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "taskId",
+    "status",
+    "lastSequence",
+    "eventChainHead",
+    "decisionsUsed",
+    "toolDispatchesUsed",
+    "workspaceMutations",
+    "lastMutationSequence",
+    "verificationRecorded",
+    "verificationSequence",
+    "reviewVerdict",
+    "evaluationSequence",
+    "terminalReason",
+    "updatedAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "runId": { "$ref": "#/$defs/id" },
+    "taskId": { "$ref": "#/$defs/id" },
+    "status": {
+      "enum": [
+        "queued",
+        "preparing",
+        "researching",
+        "planning",
+        "awaiting_approval",
+        "executing",
+        "verifying",
+        "reviewing",
+        "completed",
+        "blocked",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "lastSequence": { "type": "integer", "minimum": 0 },
+    "eventChainHead": { "$ref": "#/$defs/sha256" },
+    "decisionsUsed": { "type": "integer", "minimum": 0 },
+    "toolDispatchesUsed": { "type": "integer", "minimum": 0 },
+    "workspaceMutations": { "type": "integer", "minimum": 0 },
+    "lastMutationSequence": { "type": "integer", "minimum": 0 },
+    "verificationRecorded": { "type": "boolean" },
+    "verificationSequence": { "type": "integer", "minimum": 0 },
+    "reviewVerdict": { "type": ["string", "null"], "enum": [null, "approved", "changes_requested", "blocked"] },
+    "evaluationSequence": { "type": "integer", "minimum": 0 },
+    "terminalReason": { "type": ["string", "null"], "maxLength": 256 },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

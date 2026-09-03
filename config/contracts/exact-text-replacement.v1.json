@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "contractId": "exact-text-replacement.v1",
+  "taskId": "fixture-task",
+  "status": "active",
+  "purpose": "Verify one policy-approved exact text replacement in an isolated copied workspace.",
+  "scope": [
+    "Replace one exact occurrence in one existing regular UTF-8 file.",
+    "Preserve the immutable source fixture.",
+    "Bind verification to the final workspace and event-chain hashes."
+  ],
+  "notInScope": [
+    "Live provider calls, process execution, network access, secrets, remote writes, deployment, and release."
+  ],
+  "acceptanceCriteria": [
+    {
+      "id": "replacement-present-once",
+      "statement": "The replacement text is present exactly once in the target file.",
+      "blocking": true
+    },
+    {
+      "id": "expected-text-absent",
+      "statement": "The original expected text is absent from the target file.",
+      "blocking": true
+    },
+    {
+      "id": "workspace-hash-bound",
+      "statement": "The verified workspace hash matches the committed tool result.",
+      "blocking": true
+    },
+    {
+      "id": "source-fixture-unchanged",
+      "statement": "The immutable source fixture hash is unchanged.",
+      "blocking": true
+    }
+  ],
+  "verificationMethods": [
+    "Read the confined target as strict UTF-8.",
+    "Count replacement and expected text occurrences.",
+    "Recompute workspace and source fixture manifests."
+  ],
+  "runtimeEvidenceExpectations": [
+    "Four named verification checks with observations and a content-addressed result.",
+    "An approved read-only evaluation bound to the exact contract, rubric, projection, workspace, and event head."
+  ],
+  "risks": [
+    "Workspace confinement is not an operating-system sandbox.",
+    "A privileged concurrent same-user actor is outside this local preview threat boundary."
+  ],
+  "recoveryPath": "Reject tampered state, preserve the immutable source fixture, and retry in a fresh run root.",
+  "createdAt": "2026-08-31T00:00:00Z",
+  "updatedAt": "2026-08-31T00:00:00Z"
+}

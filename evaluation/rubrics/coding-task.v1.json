@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "rubricVersion": "1.0.0",
+  "dimensions": [
+    "requirements_fit",
+    "design_conformance",
+    "logic",
+    "tests",
+    "security_privacy",
+    "reliability",
+    "maintainability",
+    "scope_simplicity",
+    "performance_resources",
+    "operability"
+  ],
+  "blockingSeverities": ["critical", "high", "medium"],
+  "generatorRationaleIsEvidence": false,
+  "requiresReadOnlyEvaluator": true,
+  "requiresExactFinalHashes": true
+}

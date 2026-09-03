@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hve-forge.dev/schemas/v2/provider-turn.schema.json",
+  "title": "HVE-Forge Provider Turn v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "turnId",
+    "assistantText",
+    "toolCalls",
+    "usage",
+    "finishReason",
+    "providerId",
+    "modelId"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "2.0" },
+    "turnId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$" },
+    "assistantText": { "type": "string", "maxLength": 65536 },
+    "toolCalls": {
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["callId", "toolId", "arguments"],
+        "properties": {
+          "callId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$" },
+          "toolId": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)+$" },
+          "arguments": {}
+        }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inputTokens",
+        "outputTokens",
+        "cachedTokens",
+        "reasoningTokens",
+        "costMode",
+        "costMinorUnits"
+      ],
+      "properties": {
+        "inputTokens": { "type": "integer", "minimum": 0 },
+        "outputTokens": { "type": "integer", "minimum": 0 },
+        "cachedTokens": { "type": "integer", "minimum": 0 },
+        "reasoningTokens": { "type": "integer", "minimum": 0 },
+        "costMode": { "enum": ["host_managed", "metered"] },
+        "costMinorUnits": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "finishReason": {
+      "enum": ["completed", "tool_calls", "length", "cancelled", "content_filter", "error"]
+    },
+    "providerId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$" },
+    "modelId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$" }
+  }
+}

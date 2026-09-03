@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "hostId": "generic",
+  "profileVersion": "1.0.0",
+  "enforcementTier": "declarative",
+  "agentDirectory": null,
+  "agentSuffix": null,
+  "ruleDirectory": null,
+  "ruleSuffix": null,
+  "scanRoots": ["AGENTS.md", ".agents/skills"],
+  "supportsHooks": false,
+  "hooksEnabledByDefault": false,
+  "supportsMcp": false
+}

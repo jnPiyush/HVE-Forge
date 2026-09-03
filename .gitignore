@@ -1,0 +1,49 @@
+# --- AgentX (auto-generated, do not edit this block) ---
+# AgentX runtime state
+.agentx/
+# --- /AgentX ---
+
+# Local agent and editor configuration
+.vscode/
+memories/
+
+# The installed AgentX customization tree is local; track product workflows only.
+.github/*
+!/.github/workflows/
+.github/workflows/*
+!/.github/workflows/hve-quality.yml
+!/.github/copilot-instructions.md
+!/.github/instructions/
+.github/instructions/*
+!/.github/instructions/hve-*.instructions.md
+
+# Build and test output
+node_modules/
+dist/
+**/bin/
+**/obj/
+TestResults/
+coverage/
+coverage-merged/
+/artifacts/
+test-results/
+*.trx
+*.coverage
+*.coveragexml
+
+# Local harness runtime data; keep the generated host manifest reviewable.
+!.hve/
+.hve/*
+!.hve/host-manifest.json
+
+# Local credentials and overrides
+.env
+.env.*
+!.env.example
+*.user
+*.suo
+
+# Editor and OS files
+.vs/
+.DS_Store
+Thumbs.db

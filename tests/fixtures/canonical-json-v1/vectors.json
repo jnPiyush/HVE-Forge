@@ -1,0 +1,50 @@
+{
+  "valid": [
+    {
+      "name": "ordinal-key-order",
+      "input": "{\"b\":1,\"a\":2}",
+      "expected": "{\"a\":2,\"b\":1}",
+      "sha256": "d3626ac30a87e6f7a6428233b3c68299976865fa5508e4267c5415c76af7a772"
+    },
+    {
+      "name": "nested-array-and-object",
+      "input": "{\"z\":{\"b\":2,\"a\":\"x\"},\"a\":[true,null,-1]}",
+      "expected": "{\"a\":[true,null,-1],\"z\":{\"a\":\"x\",\"b\":2}}",
+      "sha256": "9c2e376d32d903c89618a25056dcd60f09d1b5802c16f63f560a0e6bb725fa61"
+    },
+    {
+      "name": "escaped-string",
+      "input": "{\"text\":\"line\\n\\\"quote\\\"\\\\slash\"}",
+      "expected": "{\"text\":\"line\\n\\u0022quote\\u0022\\\\slash\"}",
+      "sha256": "9088e0ff98819092780eb6e9c582a9792f525c16382c812dffc1f9970cc8b8b0"
+    },
+    {
+      "name": "int64-boundaries",
+      "input": "{\"min\":-9223372036854775808,\"max\":9223372036854775807}",
+      "expected": "{\"max\":9223372036854775807,\"min\":-9223372036854775808}",
+      "sha256": "161a1dcda7bae00f28f0ba32675f218fd4977065d2aa0439cf451c6d066dbbfb"
+    }
+  ],
+  "invalid": [
+    {
+      "name": "duplicate-property",
+      "input": "{\"a\":1,\"a\":2}",
+      "error": "DuplicateProperty"
+    },
+    {
+      "name": "fraction-number",
+      "input": "{\"a\":1.0}",
+      "error": "UnsupportedNumber"
+    },
+    {
+      "name": "exponent-number",
+      "input": "{\"a\":1e2}",
+      "error": "UnsupportedNumber"
+    },
+    {
+      "name": "unpaired-surrogate",
+      "input": "{\"text\":\"\\uD800\"}",
+      "error": "InvalidUnicode"
+    }
+  ]
+}

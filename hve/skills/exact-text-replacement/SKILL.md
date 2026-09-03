@@ -1,0 +1,38 @@
+---
+name: exact-text-replacement
+description: Perform one bounded, idempotent UTF-8 text replacement inside a confined workspace after deterministic policy approval.
+license: MIT
+compatibility: hve-forge >=0.2.0
+---
+
+# Exact Text Replacement
+
+> WHEN: A work contract names one existing UTF-8 file, one non-empty expected string that occurs exactly once, and its replacement.
+
+## Decision Tree
+
+1. Is the path relative and confined to the workspace? If not, reject.
+2. Is the target an existing regular file with no link or reparse component? If not, reject.
+3. Does the expected text occur exactly once? If not, reject.
+4. Does a receipt already exist? Reconcile its exact argument and file hashes; never repeat blindly.
+5. Otherwise write a prepared receipt, replace atomically, then commit the completed receipt.
+
+## Core Rules
+
+- Preserve surrounding bytes and line endings.
+- Reject traversal, devices, alternate streams, links, junctions, and ambiguous matches.
+- Recheck the target immediately before rename.
+- Bind receipts to the normalized arguments and before/after hashes.
+- Never request process, network, secret, or remote-write capability.
+
+## Error Handling
+
+Return a stable code for bad arguments, unsafe path, invalid UTF-8, occurrence count, idempotency conflict, idempotency drift, or I/O failure. Do not expose replacement content in errors or evidence.
+
+## Checklist
+
+- [ ] Policy explicitly allows `workspace.replace_exact_text`.
+- [ ] Expected text is non-empty and differs from replacement text.
+- [ ] Exactly one match was observed.
+- [ ] Receipt and final workspace hashes agree.
+- [ ] Source fixture remains unchanged.

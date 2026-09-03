@@ -1,0 +1,336 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hve-forge:schema:v1:event",
+  "title": "HVE Forge Event Envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "sequence",
+    "eventType",
+    "occurredAt",
+    "payload",
+    "previousHash",
+    "eventHash"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "runId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "eventType": {
+      "enum": [
+        "run.created",
+        "state.transitioned",
+        "instruction.selected",
+        "provider.decision_recorded",
+        "policy.decision_recorded",
+        "tool.dispatched",
+        "tool.completed",
+        "checkpoint.recorded",
+        "verification.recorded",
+        "evaluation.recorded",
+        "run.interrupted",
+        "run.cancelled",
+        "run.blocked",
+        "run.failed",
+        "run.completed"
+      ]
+    },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "payload": { "type": "object" },
+    "previousHash": { "$ref": "#/$defs/sha256" },
+    "eventHash": { "$ref": "#/$defs/sha256" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "eventType": { "const": "run.created" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/runCreatedPayload" } } }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "state.transitioned" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/stateTransitionedPayload" } } }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "instruction.selected" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/instructionSelectedPayload" } } }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "provider.decision_recorded" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/providerDecisionPayload" } } }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "policy.decision_recorded" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/policyDecisionPayload" } } }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "tool.dispatched" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/toolDispatchedPayload" } } }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "tool.completed" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/toolCompletedPayload" } } }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "checkpoint.recorded" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/checkpointPayload" } } }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "verification.recorded" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/verificationPayload" } } }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "evaluation.recorded" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/evaluationPayload" } } }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "run.interrupted" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/interruptedPayload" } } }
+    },
+    {
+      "if": {
+        "properties": {
+          "eventType": { "enum": ["run.cancelled", "run.blocked", "run.failed"] }
+        }
+      },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/terminalPayload" } } }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "run.completed" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/completedPayload" } } }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "state": {
+      "enum": [
+        "queued",
+        "preparing",
+        "researching",
+        "planning",
+        "awaiting_approval",
+        "executing",
+        "verifying",
+        "reviewing",
+        "completed",
+        "blocked",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "nullableSha256": {
+      "anyOf": [
+        { "$ref": "#/$defs/sha256" },
+        { "type": "null" }
+      ]
+    },
+    "runCreatedPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["taskId", "descriptorHash", "parentRunId", "sourceFixtureHash", "policyVersion", "policyHash", "workContractHash", "maxDecisions", "maxToolDispatches", "assets"],
+      "properties": {
+        "taskId": { "$ref": "#/$defs/id" },
+        "descriptorHash": { "$ref": "#/$defs/sha256" },
+        "parentRunId": {
+          "anyOf": [
+            { "$ref": "#/$defs/id" },
+            { "type": "null" }
+          ]
+        },
+        "sourceFixtureHash": { "$ref": "#/$defs/sha256" },
+        "policyVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "policyHash": { "$ref": "#/$defs/sha256" },
+        "workContractHash": { "$ref": "#/$defs/sha256" },
+        "maxDecisions": { "type": "integer", "minimum": 1 },
+        "maxToolDispatches": { "type": "integer", "minimum": 0 },
+        "assets": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["promptVersion", "promptHash", "skillHashes", "evaluatorRubricVersion", "evaluatorRubricHash", "mcpProtocolVersion", "telemetryVersion", "toolSchemaVersion", "sandboxProfile"],
+          "properties": {
+            "promptVersion": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "promptHash": { "$ref": "#/$defs/sha256" },
+            "skillHashes": {
+              "type": "array",
+              "maxItems": 128,
+              "uniqueItems": true,
+              "items": { "$ref": "#/$defs/sha256" }
+            },
+            "evaluatorRubricVersion": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "evaluatorRubricHash": { "$ref": "#/$defs/sha256" },
+            "mcpProtocolVersion": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "telemetryVersion": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "toolSchemaVersion": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "sandboxProfile": { "type": "string", "minLength": 1, "maxLength": 256 }
+          }
+        }
+      }
+    },
+    "stateTransitionedPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "reason"],
+      "properties": {
+        "from": { "$ref": "#/$defs/state" },
+        "to": { "$ref": "#/$defs/state" },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 1024 }
+      }
+    },
+    "instructionSelectedPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relativePath", "contentHash", "byteLength"],
+      "properties": {
+        "relativePath": { "type": ["string", "null"], "maxLength": 1024 },
+        "contentHash": { "$ref": "#/$defs/sha256" },
+        "byteLength": { "type": "integer", "minimum": 0, "maximum": 65536 }
+      }
+    },
+    "providerDecisionPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decisionId", "toolName", "argumentsHash", "idempotencyKey", "actionSignature", "inputTokens", "outputTokens", "costMinorUnits"],
+      "properties": {
+        "decisionId": { "$ref": "#/$defs/id" },
+        "toolName": { "$ref": "#/$defs/id" },
+        "argumentsHash": { "$ref": "#/$defs/sha256" },
+        "idempotencyKey": { "$ref": "#/$defs/id" },
+        "actionSignature": { "$ref": "#/$defs/sha256" },
+        "inputTokens": { "type": "integer", "minimum": 0 },
+        "outputTokens": { "type": "integer", "minimum": 0 },
+        "costMinorUnits": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "policyDecisionPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policyDecisionId", "toolName", "actionClass", "outcome", "ruleIds"],
+      "properties": {
+        "policyDecisionId": { "$ref": "#/$defs/id" },
+        "toolName": { "$ref": "#/$defs/id" },
+        "actionClass": { "enum": ["read", "workspace_write", "external_write", "destructive", "privileged", "secret_bearing"] },
+        "outcome": { "enum": ["allowed", "denied"] },
+        "ruleIds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "toolDispatchedPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["toolCallId", "toolName", "idempotencyKey", "workspaceHashBefore"],
+      "properties": {
+        "toolCallId": { "$ref": "#/$defs/id" },
+        "toolName": { "$ref": "#/$defs/id" },
+        "idempotencyKey": { "$ref": "#/$defs/id" },
+        "workspaceHashBefore": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "toolCompletedPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["toolCallId", "idempotencyKey", "outcome", "errorCode", "beforeFileHash", "afterFileHash", "workspaceHashAfter"],
+      "properties": {
+        "toolCallId": { "$ref": "#/$defs/id" },
+        "idempotencyKey": { "$ref": "#/$defs/id" },
+        "outcome": { "enum": ["succeeded", "failed", "cancelled", "timed_out"] },
+        "errorCode": { "type": ["string", "null"], "maxLength": 128 },
+        "beforeFileHash": { "$ref": "#/$defs/nullableSha256" },
+        "afterFileHash": { "$ref": "#/$defs/nullableSha256" },
+        "workspaceHashAfter": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "checkpointPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checkpointHash", "projectionHash", "workspaceHash", "chainHeadBefore"],
+      "properties": {
+        "checkpointHash": { "$ref": "#/$defs/sha256" },
+        "projectionHash": { "$ref": "#/$defs/sha256" },
+        "workspaceHash": { "$ref": "#/$defs/sha256" },
+        "chainHeadBefore": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "verificationPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidenceId", "resultHash", "artifactHash", "workspaceHash", "discoveredChecks", "passedChecks"],
+      "properties": {
+        "evidenceId": { "$ref": "#/$defs/id" },
+        "resultHash": { "$ref": "#/$defs/sha256" },
+        "artifactHash": { "$ref": "#/$defs/sha256" },
+        "workspaceHash": { "$ref": "#/$defs/sha256" },
+        "discoveredChecks": { "type": "integer", "minimum": 1 },
+        "passedChecks": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "evaluationPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evaluationId", "verdict", "artifactHash", "projectionHash", "workspaceHash", "eventChainHead", "evidenceHashes"],
+      "properties": {
+        "evaluationId": { "$ref": "#/$defs/id" },
+        "verdict": { "enum": ["approved", "changes_requested", "blocked"] },
+        "artifactHash": { "$ref": "#/$defs/sha256" },
+        "projectionHash": { "$ref": "#/$defs/sha256" },
+        "workspaceHash": { "$ref": "#/$defs/sha256" },
+        "eventChainHead": { "$ref": "#/$defs/sha256" },
+        "evidenceHashes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1024,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/sha256" }
+        }
+      }
+    },
+    "interruptedPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["point", "reason"],
+      "properties": {
+        "point": { "enum": ["after_decision", "after_tool_commit", "after_verification", "after_evaluation", "operator_pause"] },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 1024 }
+      }
+    },
+    "terminalPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason"],
+      "properties": {
+        "reason": { "type": "string", "minLength": 1, "maxLength": 1024 }
+      }
+    },
+    "completedPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projectionHash", "workspaceHash", "evaluationId", "evaluationEventHash", "evaluationArtifactHash", "verificationResultHash"],
+      "properties": {
+        "projectionHash": { "$ref": "#/$defs/sha256" },
+        "workspaceHash": { "$ref": "#/$defs/sha256" },
+        "evaluationId": { "$ref": "#/$defs/id" },
+        "evaluationEventHash": { "$ref": "#/$defs/sha256" },
+        "evaluationArtifactHash": { "$ref": "#/$defs/sha256" },
+        "verificationResultHash": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}
