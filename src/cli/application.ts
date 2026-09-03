@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
+import { buildCoworkPackage } from "../adapters/cowork-package.js";
 import { PathSafetyError, readConfinedRegularFile } from "../adapters/path-safety.js";
 import { validateJsonSchema } from "../adapters/schema-validator.js";
 import { computeWorkingTreeHash } from "../adapters/working-tree-fingerprint.js";
@@ -79,6 +80,7 @@ export async function runCli(
     if (command === "approval") return runApproval(parsed, io);
     if (command === "mcp") return await runMcp(distributionRoot, io);
     if (command === "agent-run") return await runAgentSession(parsed, distributionRoot, io);
+    if (command === "cowork-package") return await runCoworkPackage(parsed, distributionRoot, io);
 
     const runRootArgument = parsed.positionals[0] ?? "";
     const runsRoot = ["run", "submit"].includes(command)
@@ -344,6 +346,45 @@ async function runAgentSession(
   return exitCodeForSession(result.projection.status);
 }
 
+async function runCoworkPackage(
+  parsed: ParsedArguments,
+  repositoryRoot: string,
+  io: CliIo
+): Promise<number> {
+  const skillsRoot = resolve(parsed.get("skills-root") ?? join(repositoryRoot, "hve/skills"));
+  const destination = resolve(
+    parsed.get("destination") ?? join(repositoryRoot, ".hve/cowork/hve-forge-cowork.zip")
+  );
+  const result = await buildCoworkPackage({
+    skillsRoot,
+    colorIconPath: resolve(
+      parsed.get("color-icon") ?? join(repositoryRoot, "config/cowork/color.png")
+    ),
+    outlineIconPath: resolve(
+      parsed.get("outline-icon") ?? join(repositoryRoot, "config/cowork/outline.png")
+    ),
+    ...optionalField("id", parsed.get("id")),
+    ...optionalField("version", parsed.get("package-version")),
+    ...optionalField("developerName", parsed.get("developer")),
+    ...optionalField("name", parsed.get("name")),
+    ...optionalField("description", parsed.get("description"))
+  });
+  await writeFileAtomic(destination, result.archive);
+  io.stdout(
+    JSON.stringify({
+      type: "cowork-package",
+      destination,
+      byteLength: result.archive.byteLength,
+      sha256: sha256Hex(result.archive),
+      manifestId: result.manifest.id,
+      manifestVersion: result.manifest.version,
+      includedSkills: result.includedSkills,
+      excludedSkills: result.excludedSkills
+    })
+  );
+  return HarnessExitCode.Completed;
+}
+
 function exitCodeForSession(status: string): HarnessExitCode {
   switch (status) {
     case "completed":
@@ -441,6 +482,11 @@ function parseHosts(value: string | undefined): readonly HostId[] {
   return hosts as HostId[];
 }
 
+/** Omits a key entirely when its value is undefined, satisfying `exactOptionalPropertyTypes`. */
+function optionalField<K extends string>(key: K, value: string | undefined): { [P in K]?: string } {
+  return value === undefined ? ({} as never) : ({ [key]: value } as { [P in K]: string });
+}
+
 function parseInterruption(value: string | undefined): SubmitRunRequest["interruptionPoint"] {
   if (value === undefined || value === "none") return "none";
   if (
@@ -473,6 +519,10 @@ function writeHelp(io: CliIo): void {
   io.stdout(
     "  hve agent-run [--fixture PATH] [--target PATH] [--expected TEXT] [--replacement TEXT]" +
       " [--max-turns N] [--max-tool-dispatches N]"
+  );
+  io.stdout(
+    "  hve cowork-package [--skills-root PATH] [--destination PATH] [--color-icon PATH]" +
+      " [--outline-icon PATH]"
   );
   io.stdout("  hve mcp | handoff | reset | approval | archive | version");
   io.stdout("No process, shell, network, browser, secret, or remote-write tool is registered.");

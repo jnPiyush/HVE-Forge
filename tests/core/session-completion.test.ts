@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { emptySessionProjection } from "../../src/core/sessions.js";
 import {
   evaluateSessionCompletion,
   type SessionEvaluationSummary,
   type SessionVerificationSummary
 } from "../../src/core/session-completion.js";
+import { emptySessionProjection } from "../../src/core/sessions.js";
 
 const hash = "a".repeat(64);
 const otherHash = "b".repeat(64);

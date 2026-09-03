@@ -3,6 +3,7 @@ name: exact-text-replacement
 description: Perform one bounded, idempotent UTF-8 text replacement inside a confined workspace after deterministic policy approval.
 license: MIT
 compatibility: hve-forge >=0.2.0
+cowork-eligible: true
 ---
 
 # Exact Text Replacement
