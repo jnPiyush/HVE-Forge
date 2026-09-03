@@ -76,7 +76,9 @@ async function expectedPackageFiles() {
     ...catalog.routers.map((item) => item.source),
     ...catalog.skills.map((item) => item.source)
   ]);
-  for (const source of repositoryFiles().filter((path) => /^src\/.+\.ts$/u.test(path))) {
+  for (const source of repositoryFiles().filter(
+    (path) => /^src\/.+\.ts$/u.test(path) && !path.endsWith(".d.ts")
+  )) {
     const stem = `dist/${source.slice("src/".length, -".ts".length)}`;
     for (const suffix of [".d.ts", ".d.ts.map", ".js", ".js.map"]) expected.add(`${stem}${suffix}`);
   }

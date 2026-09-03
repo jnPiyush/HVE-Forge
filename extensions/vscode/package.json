@@ -1,0 +1,27 @@
+{
+  "name": "hve-forge-vscode",
+  "displayName": "HVE-Forge",
+  "description": "Deterministic bounded coding-agent sessions inside VS Code, backed by the HVE-Forge kernel and GitHub Copilot.",
+  "version": "0.2.0",
+  "publisher": "hve-forge",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": ["AI", "Chat"],
+  "activationEvents": [
+    "onCommand:hve-forge.runAgentSession"
+  ],
+  "main": "../../dist/extension/activate.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "hve-forge.runAgentSession",
+        "title": "HVE-Forge: Run Bounded Agent Session",
+        "category": "HVE-Forge"
+      }
+    ]
+  }
+}

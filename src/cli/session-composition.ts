@@ -19,6 +19,7 @@ import {
   type AgentLoopRequest,
   type AgentLoopResult
 } from "../application/agent-loop.js";
+import type { AtomicModelProvider } from "../application/model-provider.js";
 import type { SessionDescriptor } from "../application/session-contracts.js";
 import type { CancellationSignal } from "../application/tool-dispatcher.js";
 import { ToolDispatcher } from "../application/tool-dispatcher.js";
@@ -35,6 +36,12 @@ export interface SessionCompositionOptions {
   readonly replacementText?: string;
   readonly maxTurns?: number;
   readonly maxToolDispatches?: number;
+  /**
+   * Overrides the recorded fixture provider with a live one (for example, the VS Code Copilot
+   * adapter). The provider's declared `id` becomes the session's `providerId`; the caller is
+   * responsible for that provider's own capability, budget, and error-handling contract.
+   */
+  readonly provider?: AtomicModelProvider;
 }
 
 export interface SessionComposition {
@@ -148,12 +155,14 @@ export async function createDefaultAgentSession(
     repositoryRoot,
     "config/providers/fixture-openai.v1.json"
   );
-  const provider = RecordedProvider.fromFixture(
+  const recordedProvider = RecordedProvider.fromFixture(
     openAiFixture,
     providerSchema,
     "",
     demoScript(targetRelativePath, expectedText, replacementText)
   );
+  const provider = options.provider ?? recordedProvider;
+  const providerAdapterVersion = options.provider === undefined ? "1.0.0" : "live-adapter";
 
   const manager = new FileWorkspaceManager();
   const sessionId = `session-${sha256Hex(`${options.sourceFixturePath}:${Date.now()}`).slice(0, 32)}`;
@@ -203,7 +212,7 @@ export async function createDefaultAgentSession(
       evaluatorRubricVersion: "1.0.0",
       evaluatorRubricHash,
       toolSchemaVersion: "1.0.0",
-      providerAdapterVersion: provider.capabilities.adapterVersion,
+      providerAdapterVersion,
       sandboxProfile: "workspace-confinement-no-process-network"
     },
     createdAt: new Date().toISOString().replace("Z", "0000+00:00")
