@@ -1,12 +1,12 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { inspectHostWorkspace, renderWorkspace } from "../dist/hosts/index.js";
 import { repositoryRoot } from "./repository-files.mjs";
 
 const hosts = ["vscode", "cursor", "claude"];
-const first = await mkdtemp(join(tmpdir(), "hve-host-check-a-"));
-const second = await mkdtemp(join(tmpdir(), "hve-host-check-b-"));
+const first = await realpath(await mkdtemp(join(tmpdir(), "hve-host-check-a-")));
+const second = await realpath(await mkdtemp(join(tmpdir(), "hve-host-check-b-")));
 try {
   await renderWorkspace({ sourceRoot: repositoryRoot, targetRoot: first, hosts, mode: "write" });
   await renderWorkspace({ sourceRoot: repositoryRoot, targetRoot: second, hosts, mode: "write" });

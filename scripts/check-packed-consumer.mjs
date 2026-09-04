@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { repositoryRoot } from "./repository-files.mjs";
@@ -7,7 +7,7 @@ import { repositoryRoot } from "./repository-files.mjs";
 const npmCli = process.env.npm_execpath;
 if (!npmCli) throw new Error("npm_execpath is unavailable; run this check through npm.");
 
-const root = await mkdtemp(join(tmpdir(), "hve-packed-consumer-"));
+const root = await realpath(await mkdtemp(join(tmpdir(), "hve-packed-consumer-")));
 try {
   const packDirectory = join(root, "pack");
   const consumer = join(root, "consumer");

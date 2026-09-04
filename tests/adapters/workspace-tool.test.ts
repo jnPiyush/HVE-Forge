@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -18,7 +18,7 @@ afterEach(async () => {
 });
 
 async function createWorkspace(): Promise<{ workspace: string; state: string }> {
-  const root = await mkdtemp(join(tmpdir(), "hve-tool-"));
+  const root = await realpath(await mkdtemp(join(tmpdir(), "hve-tool-")));
   roots.push(root);
   const workspace = join(root, "workspace");
   const state = join(root, "state");

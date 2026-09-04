@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -43,7 +43,7 @@ describe("HVE CLI", () => {
   });
 
   it("renders and checks all supported host artifacts", async () => {
-    const targetRoot = await mkdtemp(join(tmpdir(), "hve-cli-render-"));
+    const targetRoot = await realpath(await mkdtemp(join(tmpdir(), "hve-cli-render-")));
     roots.push(targetRoot);
     const rendered = capture();
     expect(
@@ -101,7 +101,7 @@ describe("HVE CLI", () => {
   });
 
   it("runs and replays a fixture through JSON output", async () => {
-    const temporary = await mkdtemp(join(tmpdir(), "hve-cli-run-"));
+    const temporary = await realpath(await mkdtemp(join(tmpdir(), "hve-cli-run-")));
     roots.push(temporary);
     const fixture = join(temporary, "fixture");
     const runsRoot = join(temporary, "runs");
@@ -160,7 +160,7 @@ describe("HVE CLI", () => {
   });
 
   it("supports lifecycle, discovery, handoff, reset, and evidence-only archive commands", async () => {
-    const temporary = await mkdtemp(join(tmpdir(), "hve-cli-lifecycle-"));
+    const temporary = await realpath(await mkdtemp(join(tmpdir(), "hve-cli-lifecycle-")));
     roots.push(temporary);
     const fixture = join(temporary, "fixture");
     const runsRoot = join(temporary, "runs");
@@ -279,7 +279,7 @@ describe("HVE CLI", () => {
   });
 
   it("reports a dirty rendered workspace as blocked", async () => {
-    const targetRoot = await mkdtemp(join(tmpdir(), "hve-cli-dirty-"));
+    const targetRoot = await realpath(await mkdtemp(join(tmpdir(), "hve-cli-dirty-")));
     roots.push(targetRoot);
     const rendered = capture();
     await runCli(

@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -14,7 +14,7 @@ afterEach(async () => {
 
 describe("host security readiness", () => {
   it("renders no native privileged tools in default generated agents", async () => {
-    const target = await mkdtemp(join(tmpdir(), "hve-host-security-"));
+    const target = await realpath(await mkdtemp(join(tmpdir(), "hve-host-security-")));
     roots.push(target);
     await renderWorkspace({
       sourceRoot: resolve("."),
@@ -43,7 +43,7 @@ describe("host security readiness", () => {
   });
 
   it("reports structurally clean declarative hosts as advisory rather than ready", async () => {
-    const target = await mkdtemp(join(tmpdir(), "hve-host-advisory-"));
+    const target = await realpath(await mkdtemp(join(tmpdir(), "hve-host-advisory-")));
     roots.push(target);
     await renderWorkspace({
       sourceRoot: resolve("."),

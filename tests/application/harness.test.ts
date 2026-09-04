@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
@@ -16,7 +16,7 @@ afterEach(async () => {
 });
 
 async function fixture(): Promise<{ root: string; runsRoot: string }> {
-  const root = await mkdtemp(join(tmpdir(), "hve-run-"));
+  const root = await realpath(await mkdtemp(join(tmpdir(), "hve-run-")));
   roots.push(root);
   const source = join(root, "fixture");
   const runsRoot = join(root, ".hve/runs");
@@ -242,7 +242,7 @@ describe("HarnessService", () => {
 
   it("rejects a junction in the runtime runs-root path", async () => {
     const workspace = await fixture();
-    const outside = await mkdtemp(join(tmpdir(), "hve-run-outside-"));
+    const outside = await realpath(await mkdtemp(join(tmpdir(), "hve-run-outside-")));
     roots.push(outside);
     const apparentRunsRoot = join(workspace.root, "linked-runs");
     try {
@@ -258,7 +258,7 @@ describe("HarnessService", () => {
   });
 
   it("rejects a nested junction used as a trusted prompt source", async () => {
-    const root = await mkdtemp(join(tmpdir(), "hve-assets-link-"));
+    const root = await realpath(await mkdtemp(join(tmpdir(), "hve-assets-link-")));
     roots.push(root);
     const repositoryRoot = join(root, "repository");
     const outsidePrompts = join(root, "outside-prompts");
@@ -295,7 +295,7 @@ describe("HarnessService", () => {
   });
 
   it("rejects linked run metadata before parsing it", async () => {
-    const root = await mkdtemp(join(tmpdir(), "hve-store-link-"));
+    const root = await realpath(await mkdtemp(join(tmpdir(), "hve-store-link-")));
     roots.push(root);
     const outsideRun = join(root, "outside-run");
     const apparentRun = join(root, "apparent-run");
@@ -452,7 +452,7 @@ describe("HarnessService", () => {
   });
 
   it("preserves the frozen .NET full-run outcome with current canonical assets", async () => {
-    const temporary = await mkdtemp(join(tmpdir(), "hve-dotnet-oracle-"));
+    const temporary = await realpath(await mkdtemp(join(tmpdir(), "hve-dotnet-oracle-")));
     roots.push(temporary);
     const expected = JSON.parse(
       await readFile(resolve("tests/fixtures/dotnet-oracle-v1/run.json"), "utf8")

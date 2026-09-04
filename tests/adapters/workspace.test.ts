@@ -1,4 +1,4 @@
-import { access, cp as copy, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { access, cp as copy, mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -32,7 +32,7 @@ afterEach(async () => {
 
 describe("workspace preparation", () => {
   it("rejects non-directory sources, overlapping roots, and existing destinations", async () => {
-    const root = await mkdtemp(join(tmpdir(), "hve-workspace-boundaries-"));
+    const root = await realpath(await mkdtemp(join(tmpdir(), "hve-workspace-boundaries-")));
     roots.push(root);
     const sourceFile = join(root, "fixture.txt");
     await writeFile(sourceFile, "fixture\n", "utf8");
@@ -52,7 +52,7 @@ describe("workspace preparation", () => {
   });
 
   it("removes a partially copied run root when preparation fails", async () => {
-    const root = await mkdtemp(join(tmpdir(), "hve-workspace-cleanup-"));
+    const root = await realpath(await mkdtemp(join(tmpdir(), "hve-workspace-cleanup-")));
     roots.push(root);
     const source = join(root, "fixture");
     const destination = join(root, "run");

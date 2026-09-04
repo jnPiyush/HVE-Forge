@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -30,7 +30,7 @@ function minimalPng(width: number, height: number): Buffer {
 }
 
 async function skillsFixture(options: { includeIneligible?: boolean } = {}): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "hve-cowork-"));
+  const root = await realpath(await mkdtemp(join(tmpdir(), "hve-cowork-")));
   roots.push(root);
   await mkdir(join(root, "eligible-skill"), { recursive: true });
   await writeFile(
@@ -67,7 +67,7 @@ async function skillsFixture(options: { includeIneligible?: boolean } = {}): Pro
 }
 
 async function iconsFixture(): Promise<{ colorIconPath: string; outlineIconPath: string }> {
-  const root = await mkdtemp(join(tmpdir(), "hve-cowork-icons-"));
+  const root = await realpath(await mkdtemp(join(tmpdir(), "hve-cowork-icons-")));
   roots.push(root);
   const colorIconPath = join(root, "color.png");
   const outlineIconPath = join(root, "outline.png");
@@ -126,7 +126,7 @@ describe("buildCoworkPackage", () => {
 
   it("rejects icons with the wrong pixel dimensions", async () => {
     const skillsRoot = await skillsFixture();
-    const iconRoot = await mkdtemp(join(tmpdir(), "hve-cowork-badicon-"));
+    const iconRoot = await realpath(await mkdtemp(join(tmpdir(), "hve-cowork-badicon-")));
     roots.push(iconRoot);
     const colorIconPath = join(iconRoot, "color.png");
     const outlineIconPath = join(iconRoot, "outline.png");
@@ -139,7 +139,7 @@ describe("buildCoworkPackage", () => {
 
   it("rejects a non-PNG icon file", async () => {
     const skillsRoot = await skillsFixture();
-    const iconRoot = await mkdtemp(join(tmpdir(), "hve-cowork-notpng-"));
+    const iconRoot = await realpath(await mkdtemp(join(tmpdir(), "hve-cowork-notpng-")));
     roots.push(iconRoot);
     const colorIconPath = join(iconRoot, "color.png");
     const outlineIconPath = join(iconRoot, "outline.png");

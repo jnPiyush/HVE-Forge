@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -22,7 +22,7 @@ function capture(): { io: CliIo; stdout: string[]; stderr: string[] } {
 
 describe("cowork-package CLI command", () => {
   it("packages the canonical eligible skills into an installable zip", async () => {
-    const temporary = await mkdtemp(join(tmpdir(), "hve-cli-cowork-"));
+    const temporary = await realpath(await mkdtemp(join(tmpdir(), "hve-cli-cowork-")));
     roots.push(temporary);
     const destination = join(temporary, "hve-forge-cowork.zip");
 

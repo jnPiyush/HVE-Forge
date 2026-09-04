@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -22,7 +22,7 @@ function capture(): { io: CliIo; stdout: string[]; stderr: string[] } {
 
 describe("installed distribution identity", () => {
   it("initializes an unrelated target without an internal repository-root argument", async () => {
-    const target = await mkdtemp(join(tmpdir(), "hve-distribution-ordinary-"));
+    const target = await realpath(await mkdtemp(join(tmpdir(), "hve-distribution-ordinary-")));
     roots.push(target);
     const output = capture();
 
@@ -41,7 +41,7 @@ describe("installed distribution identity", () => {
   });
 
   it("never treats poisoned target assets as the installed distribution", async () => {
-    const target = await mkdtemp(join(tmpdir(), "hve-distribution-poison-"));
+    const target = await realpath(await mkdtemp(join(tmpdir(), "hve-distribution-poison-")));
     roots.push(target);
     await mkdir(join(target, "hve"), { recursive: true });
     await writeFile(
@@ -71,7 +71,7 @@ describe("installed distribution identity", () => {
   });
 
   it("rejects a repository-root override that points at the target", async () => {
-    const target = await mkdtemp(join(tmpdir(), "hve-distribution-override-"));
+    const target = await realpath(await mkdtemp(join(tmpdir(), "hve-distribution-override-")));
     const outputRoot = join(target, "output");
     roots.push(target);
     await mkdir(join(target, "hve"), { recursive: true });

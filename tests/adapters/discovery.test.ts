@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -13,7 +13,7 @@ afterEach(async () => {
 
 describe("instruction and skill discovery", () => {
   it("selects the nearest AGENTS.md and reports parent conflicts", async () => {
-    const root = await mkdtemp(join(tmpdir(), "hve-instructions-"));
+    const root = await realpath(await mkdtemp(join(tmpdir(), "hve-instructions-")));
     roots.push(root);
     await mkdir(join(root, "src/nested"), { recursive: true });
     await writeFile(join(root, "AGENTS.md"), "root", "utf8");
@@ -37,7 +37,7 @@ describe("instruction and skill discovery", () => {
   });
 
   it("accepts nested Agent Skills metadata and folded scalar descriptions", async () => {
-    const root = await mkdtemp(join(tmpdir(), "hve-skills-"));
+    const root = await realpath(await mkdtemp(join(tmpdir(), "hve-skills-")));
     roots.push(root);
     const skillRoot = join(root, "nested-metadata");
     await mkdir(skillRoot, { recursive: true });
@@ -73,7 +73,7 @@ describe("instruction and skill discovery", () => {
   });
 
   it("parses quoted scalars, comments, and allowed-tool lists", async () => {
-    const root = await mkdtemp(join(tmpdir(), "hve-skills-"));
+    const root = await realpath(await mkdtemp(join(tmpdir(), "hve-skills-")));
     roots.push(root);
     const skillRoot = join(root, "quoted-skill");
     await mkdir(skillRoot, { recursive: true });
@@ -128,7 +128,7 @@ describe("instruction and skill discovery", () => {
       "---\nname: invalid\ndescription: This description is deliberately long enough for validation.\n---\n[escape](../../outside.md)\n"
     ]
   ])("rejects %s skill metadata", async (_name, content) => {
-    const root = await mkdtemp(join(tmpdir(), "hve-skills-invalid-"));
+    const root = await realpath(await mkdtemp(join(tmpdir(), "hve-skills-invalid-")));
     roots.push(root);
     const skillRoot = join(root, "invalid");
     await mkdir(skillRoot, { recursive: true });
@@ -137,9 +137,9 @@ describe("instruction and skill discovery", () => {
   });
 
   it("rejects invalid UTF-8, oversized skills, and mismatched names", async () => {
-    const invalidUtf8Root = await mkdtemp(join(tmpdir(), "hve-skills-utf8-"));
-    const oversizedRoot = await mkdtemp(join(tmpdir(), "hve-skills-large-"));
-    const mismatchRoot = await mkdtemp(join(tmpdir(), "hve-skills-name-"));
+    const invalidUtf8Root = await realpath(await mkdtemp(join(tmpdir(), "hve-skills-utf8-")));
+    const oversizedRoot = await realpath(await mkdtemp(join(tmpdir(), "hve-skills-large-")));
+    const mismatchRoot = await realpath(await mkdtemp(join(tmpdir(), "hve-skills-name-")));
     roots.push(invalidUtf8Root, oversizedRoot, mismatchRoot);
     await mkdir(join(invalidUtf8Root, "invalid"));
     await writeFile(join(invalidUtf8Root, "invalid/SKILL.md"), Uint8Array.from([0xff]));
@@ -158,7 +158,7 @@ describe("instruction and skill discovery", () => {
   });
 
   it("handles missing roots and rejects invalid activation names", async () => {
-    const root = await mkdtemp(join(tmpdir(), "hve-skills-empty-"));
+    const root = await realpath(await mkdtemp(join(tmpdir(), "hve-skills-empty-")));
     roots.push(root);
     const file = join(root, "not-a-directory");
     await writeFile(file, "content", "utf8");
@@ -169,8 +169,8 @@ describe("instruction and skill discovery", () => {
   });
 
   it("rejects linked skill directories when supported", async () => {
-    const root = await mkdtemp(join(tmpdir(), "hve-skills-link-"));
-    const outside = await mkdtemp(join(tmpdir(), "hve-skills-outside-"));
+    const root = await realpath(await mkdtemp(join(tmpdir(), "hve-skills-link-")));
+    const outside = await realpath(await mkdtemp(join(tmpdir(), "hve-skills-outside-")));
     roots.push(root, outside);
     try {
       await symlink(outside, join(root, "linked"), "junction");

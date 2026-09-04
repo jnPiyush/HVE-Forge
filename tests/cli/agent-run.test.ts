@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -22,7 +22,7 @@ function capture(): { io: CliIo; stdout: string[]; stderr: string[] } {
 
 describe("agent-run CLI command", () => {
   it("completes a bounded multi-turn session end to end and writes a durable event log", async () => {
-    const temporary = await mkdtemp(join(tmpdir(), "hve-cli-agent-run-"));
+    const temporary = await realpath(await mkdtemp(join(tmpdir(), "hve-cli-agent-run-")));
     roots.push(temporary);
     const fixture = join(temporary, "fixture");
     const runsRoot = join(temporary, "sessions");
@@ -60,7 +60,7 @@ describe("agent-run CLI command", () => {
   });
 
   it("rejects an out-of-range turn budget the same way other numeric flags are validated", async () => {
-    const temporary = await mkdtemp(join(tmpdir(), "hve-cli-agent-run-bad-"));
+    const temporary = await realpath(await mkdtemp(join(tmpdir(), "hve-cli-agent-run-bad-")));
     roots.push(temporary);
     const fixture = join(temporary, "fixture");
     await mkdir(join(fixture, "src"), { recursive: true });

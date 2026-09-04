@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -38,7 +38,7 @@ afterEach(async () => {
 async function fixture(
   content: string
 ): Promise<{ workspaceRoot: string; sourceRoot: string; sourceFixtureHash: string }> {
-  const root = await mkdtemp(join(tmpdir(), "hve-session-"));
+  const root = await realpath(await mkdtemp(join(tmpdir(), "hve-session-")));
   roots.push(root);
   const sourceRoot = join(root, "source");
   await mkdir(join(sourceRoot, "src"), { recursive: true });

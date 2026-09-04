@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -14,7 +14,7 @@ afterEach(async () => {
 });
 
 async function tree(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "hve-fingerprint-"));
+  const root = await realpath(await mkdtemp(join(tmpdir(), "hve-fingerprint-")));
   roots.push(root);
   await mkdir(join(root, "src"), { recursive: true });
   await writeFile(join(root, "src/a.ts"), "export const a = 1;\n", "utf8");
