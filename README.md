@@ -19,10 +19,11 @@ Version 0.2 is implemented in strict TypeScript on Node 24. The runtime has zero
 
 | Host | Native outputs | Portable skills | Current enforcement |
 |---|---|---|---|
-| VS Code/Copilot | `.claude/agents`, `.github/instructions`, `.github/copilot-instructions.md` | `.claude/skills` | Kernel-mediated |
+| VS Code/Copilot | `.claude/agents`, `.github/instructions`, `.github/copilot-instructions.md`, `extensions/vscode/` | `.claude/skills` | Kernel-mediated |
 | Cursor | `.claude/agents`, `.cursor/rules` | `.claude/skills` | Kernel-mediated |
 | Claude Code | `.claude/agents`, `.claude/rules`, `CLAUDE.md` | `.claude/skills` | Kernel-mediated |
 | Other Agent Skills clients | `AGENTS.md` | `.agents/skills` when rendered alone | Declarative |
+| Microsoft 365 Copilot Cowork | `hve cowork-package` archive (package render target, not a discovery root) | `skills/<name>/SKILL.md` for `cowork-eligible: true` skills only | Declarative |
 
 Repository hooks are not enabled automatically. Native host tools can bypass a local CLI, so `doctor` reports the actual tier instead of claiming a sandbox that the host cannot provide.
 
@@ -70,12 +71,47 @@ hve run|submit [--fixture PATH] [--target PATH] [--expected TEXT] [--replacement
 hve inspect|stream|pause|resume|cancel|retry|fork|replay RUN_ROOT
 hve instructions --workspace PATH --target RELATIVE_PATH
 hve skills [--root PATH] [--activate NAME]
+hve agent-run [--fixture PATH] [--target PATH] [--expected TEXT] [--replacement TEXT] [--max-turns N] [--max-tool-dispatches N]
+hve cowork-package [--skills-root PATH] [--destination PATH] [--color-icon PATH] [--outline-icon PATH]
 hve handoff RUN_ROOT --destination PATH
 hve reset HANDOFF_PATH
 hve archive RUN_ROOT --destination PATH
 hve approval --action TEXT --class CLASS --resource RESOURCE
 hve mcp
 ```
+
+## Run the bounded multi-turn agent loop
+
+```powershell
+node dist/cli/main.js agent-run --repository-root .
+```
+
+The command runs the schema-v2 bounded agent loop (`docs/artifacts/specs/SPEC-004-cross-surface-execution.md` section 4) against the sample fixture: it assembles trust-enveloped context, requests bounded turns from a scripted multi-turn provider, dispatches tool calls sequentially through the same policy-gated dispatcher, verifies and evaluates the result, and reports the session's status, stop reason, and `evidenceFreshness` grade as JSON. The VS Code extension runs the identical loop with a live GitHub Copilot model in place of the scripted provider.
+
+## Package Cowork skills
+
+```powershell
+node dist/cli/main.js cowork-package --repository-root . --destination hve-forge-cowork.zip
+```
+
+Builds an installable Microsoft 365 Copilot Cowork plugin package from the canonical skill catalog: a manifest, 192x192 and 32x32 icons, and one folder per skill explicitly marked `cowork-eligible: true` in its frontmatter, all at the archive root. Skills that assume host execution (build, test, or security-scan commands) are excluded rather than rendered in a degraded form, because Cowork's managed container has no terminal.
+
+## VS Code extension
+
+`extensions/vscode/` is a thin manifest over the same compiled kernel the CLI uses (`dist/extension/`). It contributes one command, "HVE-Forge: Run Bounded Agent Session", backed by a narrow, unit-tested seam over the VS Code Language Model API restricted to the Copilot vendor. It has zero runtime dependencies, no bundler, and contributes no globally invokable tool. Native workspace-folder selection, mutation confirmation, and a chat-participant surface are tracked follow-up work; this extension has not been smoke-tested inside a live Extension Development Host in this environment.
+
+## Install and remove
+
+This package has not yet been published to a registry. Once published, install and remove it like any scoped npm package:
+
+```powershell
+npm install --global @hve-forge/cli
+hve doctor --target-root .
+
+npm uninstall --global @hve-forge/cli
+```
+
+Local run and session data live only under the ignored `.hve/` directory of whichever workspace you run `hve` in; removing the package does not remove that data, and removing `.hve/` never affects the package installation.
 
 ## Architecture
 
@@ -100,14 +136,19 @@ Before adding live providers or higher-risk tools, require an updated threat mod
 
 - [Documentation index](docs/DOCUMENTATION.md)
 - [Cross-editor ADR](docs/artifacts/adr/ADR-003-cross-editor-typescript-harness.md)
-- [Technical specification](docs/artifacts/specs/SPEC-003-cross-editor-typescript-harness.md)
+- [Cross-surface execution ADR](docs/artifacts/adr/ADR-004-cross-surface-execution.md)
+- [Technical specification (cross-editor)](docs/artifacts/specs/SPEC-003-cross-editor-typescript-harness.md)
+- [Technical specification (cross-surface execution)](docs/artifacts/specs/SPEC-004-cross-surface-execution.md)
 - [Operations runbook](docs/operations/RUNBOOK.md)
 - [Security controls](docs/security/CONTROLS-MATRIX.md)
+- [Security policy](SECURITY.md)
+- [Changelog](CHANGELOG.md)
 
 ## Explicitly unsupported
 
-- Live provider calls and provider-neutral production claims.
-- Arbitrary command, process, network, browser, secret, or remote-write tools.
+- Live (non-recorded) model provider calls beyond the VS Code Copilot vertical slice, and provider-neutral production claims.
+- Arbitrary command, process, network, or browser tools; execute-class tools remain unregistered until an isolation backend is approved.
 - Container or microVM isolation.
 - Automatic installation of executable repository hooks.
+- Mid-session crash recovery (checkpoint/resume) for schema-v2 bounded sessions.
 - Multi-tenant identity, deployment, release publication, and data-residency guarantees.

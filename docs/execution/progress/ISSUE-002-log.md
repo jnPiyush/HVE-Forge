@@ -41,16 +41,16 @@
 | Milestone | State | Evidence |
 |---|---|---|
 | End-user release review | Complete - NO-GO | Functional review: 1 Critical, 7 High; security review: 5 High, 4 Medium; release certification: NO-GO |
-| Architecture security-order amendment | In progress | ADR-004, council, SPEC-004, and EXEC-PLAN-004 |
-| Installed distribution identity | Not started | Packed install passes; normal `hve init` fails without an internal package-root override |
-| Safe host profiles | Not started | Current generated agents expose native privileged tools and remain declarative |
-| Trust envelopes and provider receipts | Not started | Required before any live provider or model-bound repository content |
-| Read/list/search tools and dispatcher | Registry complete; adapters and wiring not started | `src/core/tool-registry.ts` |
-| Atomic-turn provider and bounded loop | Not started | Recorded provider and single-decision runtime remain active |
-| Evidence freshness | Not started | Working-tree fingerprint must include relevant untracked files |
-| Native VS Code/Copilot slice | Not started | Native API design recorded; no extension implementation yet |
-| Cowork package | Not started | Instruction-only package target planned |
-| Release provenance | Blocked | Candidate source is untracked; remote main contains only initial files |
+| Architecture security-order amendment | Complete | ADR-004, council, SPEC-004, and EXEC-PLAN-004 |
+| Installed distribution identity | Complete | `src/cli/distribution-root.ts`, `tests/cli/distribution-root.test.ts` (poisoned-target rejection) |
+| Safe host profiles | Complete | `tests/hosts/security-readiness.test.ts`; no generated agent grants a native privileged tool |
+| Trust envelopes and provider receipts | Complete for trust envelopes | `src/core/trust.ts`, `src/application/context-assembler.ts`; egress receipts remain N/A until a live network provider exists |
+| Read/list/search tools and dispatcher | Complete | `src/adapters/workspace-read-tools.ts`, `src/application/tool-dispatcher.ts` |
+| Atomic-turn provider and bounded loop | Complete for the demo task shape | `src/application/model-provider.ts`, `src/application/agent-loop.ts`, `src/core/sessions.ts` (schema v2, parallel to frozen schema v1) |
+| Evidence freshness | Complete for the schema-v2 completion gate | `src/core/freshness.ts`, `src/adapters/working-tree-fingerprint.ts` (exclusion-aware, fails closed on overflow/links) |
+| Native VS Code/Copilot slice | Complete for model-selection and bounded-loop wiring | `src/extension/`, `extensions/vscode/package.json`; native mutation confirmation, chat participant, and a live Extension Development Host smoke test remain open |
+| Cowork package | Complete | `src/adapters/cowork-package.ts`, `hve cowork-package` CLI command |
+| Release provenance | Complete locally; remote CI pending | Candidate is fully committed on `feature/2-production-harness`; `SECURITY.md`, `CHANGELOG.md`, `check:tracked-input`, `release:digests` added; remote CI has not yet evaluated this exact commit |
 
 ## Session observations
 
@@ -103,6 +103,17 @@
 - Started a new high-risk implementation loop with a 221-test baseline and a five-iteration minimum.
 - Selected application-owned atomic turns. Distribution trust and safe host profiles come first, followed by trust envelopes, tools, provider, loop, freshness, and then the live VS Code surface.
 
+### 2026-09-03/04 - Slices 6 through 10 implemented and committed
+
+- Confirmed slices 1-5 (distribution identity, safe host profiles, trust envelopes, tools/dispatcher, atomic-turn provider) were already implemented in the untracked candidate with real exit-gate test coverage, ahead of what this log previously recorded.
+- Implemented slice 6 (bounded agent loop): a parallel schema-v2 event/projection family that never reinterprets the frozen schema-v1 registry; `AgentLoop` wiring context assembly, the atomic provider, and the tool dispatcher into repeated turns bounded by budgets, oscillation detection (repeated action signature and repeated workspace fingerprint), and a three-strikes failed-fix rule. Found and fixed three real bugs during test-first development: the schema-v2 verification service used the wall clock instead of an injected clock (causing false staleness), the reducer counted any successful tool dispatch as a workspace mutation instead of only writes, and completion re-verified with a different attempt number than the one actually recorded, breaking the evidence binding.
+- Implemented slice 7 (evidence freshness): a named `FRESH`/`STALE`/`MISSING` grade and an exclusion-aware working-tree fingerprint that fails closed on bounded-inventory overflow or links, wired into the schema-v2 completion gate.
+- Implemented slice 9 (Cowork package) ahead of slice 8, using the Cowork skill-authoring guide to get the exact manifest schema: an installable zip built directly from the canonical skill catalog, shipping only `cowork-eligible: true` skills.
+- Implemented slice 8 (VS Code extension): a narrow, fully unit-tested seam over the VS Code Language Model API with zero test performing a live model call; `@types/vscode` was evaluated and rejected because every version available through the configured registry mirror publishes only a legacy SHA-1 integrity hash, which fails this repository's own SHA-512 supply-chain gate, so a local ambient declaration was used instead, exactly as SPEC-004 anticipates for that situation.
+- Implemented slice 10 (release hardening): package license/repository/support metadata, `CHANGELOG.md`, `SECURITY.md`, a `check:tracked-input` gate, and a `release:digests` artifact-manifest script wired into CI's package job.
+- Committed the entire candidate to `feature/2-production-harness` in three commits (prior uncommitted work, slices 6-7, Cowork, VS Code extension), resolving the release-provenance blocker that the 2026-09-02 review raised: the candidate is no longer untracked.
+- Test count grew from 256 (start of session) to 327; `npm run quality` passes end to end except for one transient failure late in the session: the internal audit registry's security-advisory endpoint returned repeated `TF400898` internal errors unrelated to any dependency change (the identical dependency tree passed audit earlier in the same session with zero vulnerabilities).
+
 ## Validation ledger
 
 | Time | Command or action | Expected | Observed | Result |
@@ -120,17 +131,23 @@
 | 2026-09-01 | `npm ci --ignore-scripts` | Reproducible dependency install without lifecycle scripts | 71 packages added, 72 audited, 0 vulnerabilities | Pass |
 | 2026-09-01 | `npm run quality` | Complete Node release gate | 203 tests; coverage 90.44/84.72/98.03/92.34; every layer >=80%; host, ASCII, secrets, supply-chain, audit, exact package, and SBOM checks pass | Pass |
 | 2026-09-01 | Host update/check/doctor | One discoverable logical copy per supported host | Clean render, no conflicts, zero duplicates; all hosts correctly report kernel-mediated warnings | Pass |
+| 2026-09-03/04 | `npm run test:coverage` | Full suite green with layered coverage | 327 tests pass; every layer (core, application, adapters, hosts, cli) >=80% in all four dimensions | Pass |
+| 2026-09-03/04 | `hve agent-run` against the sample fixture | Bounded multi-turn session completes | 3 turns, 2 tool dispatches, status completed, `evidenceFreshness: FRESH` | Pass |
+| 2026-09-03/04 | `hve cowork-package` against the canonical skill catalog | Only `cowork-eligible: true` skills ship | `exact-text-replacement` included; five orchestration skills excluded with a named reason | Pass |
+| 2026-09-03/04 | `npm run quality` (full gate, repeated) | All local release gates green | 329 exact allowlisted files, 245 ASCII paths, 122 supply-chain packages, 71 SBOM components; audit passed once with 0 vulnerabilities, then hit a persistent `TF400898` internal registry outage on six later retries over ~10 minutes with an unchanged dependency tree | Pass except audit (external outage, not a code defect) |
+| 2026-09-03/04 | `git status --porcelain` after three commits | Clean working tree | No output | Pass |
 
 ## Active risks and blockers
 
 - Strong OS isolation is unavailable locally because Docker or a microVM backend is absent. The MVP will not register process or network tools.
-- Live provider behavior, cost, and cross-provider compatibility cannot be certified without explicit model, budget, and data-governance input. Recorded fixture adapters remain the safe default.
-- Remote CI and CodeQL have not executed for the uncommitted local candidate. Local locked restore and vulnerability audit pass; remote clean-runner evidence remains required before any release.
+- Live provider behavior, cost, and cross-provider compatibility cannot be certified without explicit model, budget, and data-governance input beyond the VS Code Copilot vertical slice.
+- Remote CI and CodeQL have not executed for this exact commit. Local locked restore and vulnerability audit pass; remote clean-runner evidence remains required before any release.
 - Real NTFS reparse creation and mutation testing were unavailable locally and are not claimed as passed.
 - Cursor and Claude CLIs are not installed locally, so real product discovery was not smoke-tested; conformance uses official path/frontmatter contracts plus renderer and doctor tests.
-- Default generated agents can invoke native host tools outside the kernel. Those grants must be removed before any host output is described as security-ready.
+- The VS Code extension has not been smoke-tested inside a live Extension Development Host in this environment; native workspace-folder selection, mutation confirmation, and a chat-participant surface remain open.
+- Schema-v2 bounded sessions have no mid-session crash recovery (checkpoint/resume); a session runs to a terminal state within one process lifetime.
 - SHA-256 event chains prove internal consistency, not authenticity against a writer who can replace all local state. Commit-bound CI attestation and fresh workspace fingerprints remain required.
 
 ## Next action
 
-Complete slice 0 contract correction, then implement slice 1 installed-distribution identity test-first. Commit, push, publication, and deployment remain outside current authority.
+Push `feature/2-production-harness` and open or update the pull request so remote CI (quality matrix, CodeQL, package/SBOM, provenance attestation) evaluates this exact commit. Then prioritize a live Extension Development Host smoke test and native mutation confirmation for the VS Code surface, followed by general (non-exact-replace) work-contract support for the bounded loop. Publication and deployment remain outside current authority.

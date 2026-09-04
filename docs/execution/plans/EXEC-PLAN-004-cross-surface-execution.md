@@ -29,17 +29,17 @@ Recorded before planning, per the pre-plan gate.
 | 0a | ADR-004 and Model Council recorded | Complete |
 | 0b | SPEC-004 contracts recorded | Complete |
 | 0c | End-user, security, and release review | Complete - NO-GO findings recorded |
-| 0d | Security-order amendment and test baseline | In progress - baseline 221 |
-| 1 | Installed distribution identity and packed onboarding | Not started |
-| 2 | Safe declarative host profiles and honest doctor | Not started |
-| 3 | Trust envelopes and bounded context assembly | Not started |
-| 4 | Read/list/search tools and immutable dispatcher | Registry complete; adapters not started |
-| 5 | Atomic-turn provider contract and recorded compatibility | Not started |
-| 6 | Bounded durable agent loop and v2 protocol | Not started |
-| 7 | Working-tree fingerprint and evidence freshness | Not started |
-| 8 | Native VS Code/Copilot vertical slice | Not started |
-| 9 | Cowork package target | Not started |
-| 10 | Release hardening and provenance | Not started |
+| 0d | Security-order amendment and test baseline | Complete - baseline grew from 221 to 300 |
+| 1 | Installed distribution identity and packed onboarding | Complete |
+| 2 | Safe declarative host profiles and honest doctor | Complete |
+| 3 | Trust envelopes and bounded context assembly | Complete |
+| 4 | Read/list/search tools and immutable dispatcher | Complete |
+| 5 | Atomic-turn provider contract and recorded compatibility | Complete |
+| 6 | Bounded durable agent loop and v2 protocol | Complete for the demo task shape; general work contracts deferred |
+| 7 | Working-tree fingerprint and evidence freshness | Complete for the schema-v2 completion gate; v1 stays frozen by design |
+| 8 | Native VS Code/Copilot vertical slice | Complete for model-selection and bounded-loop wiring; native mutation confirmation, chat participant, and a live Extension Development Host smoke test remain open |
+| 9 | Cowork package target | Complete |
+| 10 | Release hardening and provenance | Complete locally (package metadata, changelog, security policy, tracked-input gate, digest manifest, CI wiring); remote CI has not yet evaluated this candidate |
 | 11 | Isolation backend and execute-class tools | Deferred pending separate approval |
 
 ## Context and Orientation
@@ -49,6 +49,8 @@ Current verified state at the start of step 1: 203 tests across 13 files passed;
 After the registry landed: 221 tests across 14 files pass at 90.57 percent statements and 85.00 percent branches, with the registry module covering fail-closed admission, snapshot-based validation, deep immutability, and locale-independent ordering.
 
 Fresh end-user release review added five security blockers: packaged initialization reverses distribution and target trust, native host tools bypass the kernel, local evidence is not commit-authenticated or durably fresh, injection controls were scheduled after live retrieval, and almost all candidate files are untracked. Functional review also confirmed that the current runtime cannot perform arbitrary coding work. The local quality baseline remains strong: 221 tests pass, aggregate coverage is 90.57 percent statements and 85.00 percent branches, every production layer exceeds 80 percent, a clean-copy install passes, and repeated npm packs are byte-identical.
+
+Current verified state after steps 1-10: 327 tests across 36 files pass; typecheck, lint, and format are clean; every production layer (core, application, adapters, hosts, cli) is at or above 80 percent coverage in all four dimensions; `npm run quality` passes end to end including the packed-consumer poisoned-target test, host render/duplicate checks, 245 ASCII paths, the candidate-secret scan, the 122-package SHA-512 supply-chain gate, exact 329-file package-inventory allowlist, and a 71-component SBOM. All five prior security blockers are addressed: distribution assets resolve from the installed module location and reject a poisoned target (slice 1); default generated agents carry no native privileged tool and `doctor` reports declarative readiness honestly (slice 2); every model-bound byte carries an origin/trust envelope (slice 3); the bounded loop, not native host tools, owns tool dispatch (slices 4-6); and evidence freshness is graded `FRESH`/`STALE`/`MISSING` against an exclusion-aware working-tree fingerprint (slice 7). The candidate is now fully committed on `feature/2-production-harness` (previously ~226 paths were untracked). Remote CI has not yet run for this exact commit. The npm audit step hit a transient internal registry outage (`TF400898`) late in the session on an unchanged dependency tree that had already passed audit earlier the same session with zero vulnerabilities.
 
 ## Plan of Work
 
@@ -158,6 +160,13 @@ If a step fails its exit gate twice, stop and investigate rather than attempting
 | 2026-09-02 | Multi-turn execution uses schema v2 while v1 remains replay-only | Existing event meanings and frozen parity evidence cannot be silently reinterpreted |
 | 2026-09-02 | Fingerprints include relevant untracked files | Release and coding work routinely includes new files; omitting them creates false freshness |
 | 2026-09-02 | Default host artifacts are declarative and grant no native privileged tools | Prompt guidance cannot enforce policy over ambient host tools |
+| 2026-09-03 | Oscillation is detected by either a repeated action signature (threshold two) or a repeated post-mutation workspace fingerprint (window six) | A single fingerprint-only check cannot cheaply catch "the model proposed the identical fix twice"; a signature-only check cannot catch a broader A-B-A cycle across different actions |
+| 2026-09-03 | The failed-fix and completion path reuses the existing exact-text-replacement work contract and rubric unchanged for the first bounded-loop demo | Proves the loop mechanics against the one task shape the harness already verifies end to end, rather than building a general acceptance-criteria evaluation engine in the same slice |
+| 2026-09-03 | A tool call counts as a workspace mutation only when its `afterFileHash` is non-null, not merely when it succeeds | Read/search tools can now succeed without mutating; conflating "succeeded" with "mutated" would trigger verification after every read |
+| 2026-09-03 | Cowork skill eligibility is an explicit opt-in frontmatter flag (`cowork-eligible: true`), default excluded | Matches the project's deny-by-default policy posture; five of six canonical skills assume build/test/security-scan execution Cowork's managed container cannot provide |
+| 2026-09-03 | `@types/vscode` is not used; a local ambient declaration covers only the consumed surface | Every version available through the configured registry mirror publishes a legacy SHA-1 integrity hash, failing this repository's own SHA-512 supply-chain gate; SPEC-004 section 6.6 anticipates exactly this fallback |
+| 2026-09-03 | The VS Code extension contributes zero global language-model tools in this release | Stricter than the specification's single-status-tool allowance; no status tool is implemented yet, and shipping a placeholder would overclaim |
+| 2026-09-03 | `check:tracked-input` and `release:digests` are separate from `npm run quality`, composed only in `release:check` | A tracked-input gate would fail on every normal work-in-progress commit if it ran inside the everyday development quality gate |
 
 ## Surprises and Discoveries
 
@@ -170,6 +179,9 @@ If a step fails its exit gate twice, stop and investigate rather than attempting
 - A packed install succeeds, but ordinary initialization fails because the CLI discovers its own distribution assets from the target directory. An undocumented internal package-root override works, proving packaging bytes are present but trust resolution is reversed.
 - Default generated agents currently receive native shell, edit, and web tools. Structural render success is not security readiness, and current host profiles must be treated as declarative.
 - Local quality and byte-reproducible packages are not release provenance while candidate source remains untracked and remote CI has not evaluated it.
+- Test-first development of the bounded loop surfaced three real defects that a design review alone would not have caught: `FileSessionVerificationService` called the wall clock directly instead of an injected clock, which made evidence appear stale by a few hours whenever a test used a fixed clock; the schema-v2 reducer treated any successful tool dispatch as a workspace mutation, so a pure read triggered verification; and the completion path re-verified with a fresh attempt number instead of reusing the artifact already bound to the recorded event, breaking the evidence hash binding. All three were caught by the first end-to-end happy-path test, not by unit tests of the individual functions in isolation.
+- `@types/vscode` could not be added at any version: the configured internal registry mirror serves it with only a legacy SHA-1 integrity hash for every release evaluated (1.90.0 and 1.134.0), which this repository's own supply-chain gate rejects. This is an external registry-mirror limitation, not a package-quality issue with `@types/vscode` itself.
+- `scripts/check-package.mjs` had a latent bug, exposed only once a `.d.ts`-only ambient declaration file existed under `src/`: its dist-output expectation loop assumed every `src/**/*.ts` file emits its own compiled output.
 
 ## Artifacts and Notes
 

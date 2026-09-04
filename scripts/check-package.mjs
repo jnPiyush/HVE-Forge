@@ -34,6 +34,8 @@ async function expectedPackageFiles() {
   const expected = new Set([
     "LICENSE",
     "README.md",
+    "CHANGELOG.md",
+    "SECURITY.md",
     "package.json",
     "hve/catalog.json",
     "hve/hosts/claude.json",

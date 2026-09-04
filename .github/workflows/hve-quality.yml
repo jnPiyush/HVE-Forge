@@ -81,8 +81,7 @@ jobs:
           npm run build
           npm run check:package
           npm run sbom
-          mkdir -p artifacts/packages
-          npm pack --ignore-scripts --pack-destination artifacts/packages
+          npm run release:digests
 
       - name: Upload package and SBOM
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -93,6 +92,8 @@ jobs:
           path: |
             artifacts/packages/*.tgz
             artifacts/sbom.cdx.json
+            artifacts/hve-forge-cowork.zip
+            artifacts/digests.json
 
   attest:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

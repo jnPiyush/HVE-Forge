@@ -2,6 +2,16 @@
   "name": "@hve-forge/cli",
   "version": "0.2.0",
   "description": "Deterministic cross-editor AI coding harness for VS Code, Cursor, and Claude Code.",
+  "license": "MIT",
+  "author": "Piyush Jain",
+  "homepage": "https://github.com/jnPiyush/HVE-Forge#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jnPiyush/HVE-Forge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jnPiyush/HVE-Forge/issues"
+  },
   "type": "module",
   "bin": {
     "hve": "dist/cli/main.js"
@@ -22,7 +32,9 @@
     "protocols/",
     "samples/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md",
+    "SECURITY.md"
   ],
   "engines": {
     "node": ">=24.0.0 <25"
@@ -38,6 +50,7 @@
     "check:secrets": "node scripts/check-secrets.mjs",
     "check:supply-chain": "node scripts/check-supply-chain.mjs",
     "check:toolchain": "node scripts/check-toolchain.mjs",
+    "check:tracked-input": "node scripts/check-tracked-input.mjs",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "biome lint .",
     "format": "biome check --write .",
@@ -48,7 +61,9 @@
     "test:packed-consumer": "node scripts/check-packed-consumer.mjs",
     "audit": "npm audit --audit-level=high --ignore-scripts",
     "sbom": "node scripts/new-sbom.mjs",
+    "release:digests": "node scripts/write-artifact-digests.mjs",
     "quality": "npm run check:toolchain && npm run typecheck && npm run format:check && npm run lint && npm run test:coverage && npm run check:layer-coverage && npm run build && npm run test:packed-consumer && npm run check:boundaries && npm run check:hosts && npm run check:ascii && npm run check:secrets && npm run check:supply-chain && npm run audit && npm run check:package && npm run sbom",
+    "release:check": "npm run check:tracked-input && npm run quality && npm run release:digests",
     "start": "node dist/cli/main.js"
   },
   "devDependencies": {
