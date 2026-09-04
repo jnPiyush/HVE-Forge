@@ -7,5 +7,5 @@
   "legacySkillHash": "ee65e2bc2d319b5b78840465dcd02e50b2c87153858b4f0bf440125771d32315",
   "sandboxProfile": "windows-workspace-confinement-no-process-network",
   "eventCount": 16,
-  "targetText": "Hello from HVE-Forge\r\n"
+  "targetText": "Hello from HVE-Forge\n"
 }
