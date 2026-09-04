@@ -104,9 +104,14 @@ export class AgentLoop {
         },
         projection.eventChainHead
       );
+      // Validate before persisting: `applySessionEvent` is pure and throws on any invariant
+      // violation, so computing the next projection first guarantees a rejected event is never
+      // written to the durable JSONL log. Only a projection the reducer actually accepted is
+      // ever appended to `eventSink`.
+      const next = applySessionEvent(projection, event);
       await this.deps.eventSink.append(event);
       events.push(event);
-      projection = applySessionEvent(projection, event);
+      projection = next;
       return event;
     };
     const stop = async (reason: LoopStopReason, blockReason: string): Promise<void> => {

@@ -436,4 +436,84 @@ describe("AgentLoop", () => {
     expect(result.projection.turnsUsed).toBe(0);
     replaySession(sessionDescriptor.sessionId, result.events);
   });
+
+  it("completes a session whose model finishes immediately with zero tool calls", async () => {
+    // The fixture already contains the replacement text, so verification legitimately passes
+    // without a single tool dispatch or workspace mutation. This used to crash `AgentLoop.run`
+    // with `SessionProjectionError` because `verification.recorded` required a committed
+    // mutation regardless of whether the workspace already satisfied the work contract.
+    const { workspaceRoot, sourceRoot, sourceFixtureHash } =
+      await fixture("Hello from HVE-Forge\n");
+    const provider = scriptedProvider([
+      {
+        assistantText: "The file already has the expected text; nothing to change.",
+        toolCalls: [],
+        usage: usage(),
+        finishReason: "completed"
+      }
+    ]);
+    const dependencies = await buildDependencies({ provider });
+    const loop = new AgentLoop(dependencies);
+    const sessionDescriptor = descriptor(workspaceRoot, sourceRoot, sourceFixtureHash);
+
+    const result = await loop.run(request(sessionDescriptor), NOT_CANCELLED);
+
+    expect(result.projection.status).toBe("completed");
+    expect(result.projection.turnsUsed).toBe(1);
+    expect(result.projection.toolDispatchesUsed).toBe(0);
+    expect(result.projection.workspaceMutations).toBe(0);
+    const replayed = replaySession(sessionDescriptor.sessionId, result.events);
+    expect(replayed).toEqual(result.projection);
+  });
+
+  it("stops when only the tool-dispatch budget is exhausted, not the turn budget", async () => {
+    // maxToolDispatches is exhausted after the first read while maxTurns (8, the default) is
+    // nowhere close. Each turn requests a structurally different read so the action signature
+    // never repeats, isolating the tool-dispatch budget from oscillation detection. The reducer
+    // used to accept `decision_budget_exhausted` only when `turnsUsed >= maxTurns`, so this
+    // legitimate stop crashed the loop with `SessionProjectionError` before the fix.
+    const { workspaceRoot, sourceRoot, sourceFixtureHash } = await fixture("Hello from fixture\n");
+    const provider = scriptedProvider([
+      {
+        assistantText: "Reading the file.",
+        toolCalls: [
+          {
+            callId: "call-1",
+            toolId: "workspace.read_file",
+            arguments: { relativePath: "src/Greeting.txt" }
+          }
+        ],
+        usage: usage(),
+        finishReason: "tool_calls"
+      },
+      {
+        assistantText: "Listing the directory.",
+        toolCalls: [
+          {
+            callId: "call-2",
+            toolId: "workspace.list_directory",
+            arguments: { relativePath: "src" }
+          }
+        ],
+        usage: usage(),
+        finishReason: "tool_calls"
+      }
+    ]);
+    const dependencies = await buildDependencies({ provider });
+    const loop = new AgentLoop(dependencies);
+    const sessionDescriptor = descriptor(workspaceRoot, sourceRoot, sourceFixtureHash, {
+      limits: {
+        ...descriptor(workspaceRoot, sourceRoot, sourceFixtureHash).limits,
+        maxToolDispatches: 1
+      }
+    });
+
+    const result = await loop.run(request(sessionDescriptor), NOT_CANCELLED);
+
+    expect(result.projection.status).toBe("blocked");
+    expect(result.projection.stopReason).toBe("decision_budget_exhausted");
+    expect(result.projection.toolDispatchesUsed).toBe(1);
+    expect(result.projection.turnsUsed).toBeLessThan(sessionDescriptor.limits.maxTurns);
+    replaySession(sessionDescriptor.sessionId, result.events);
+  });
 });

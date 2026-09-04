@@ -91,6 +91,7 @@ export interface SessionProjection {
   readonly lastSequence: number;
   readonly eventChainHead: string;
   readonly limits: SessionLimits | null;
+  readonly createdAt: string | null;
   readonly turnsUsed: number;
   readonly toolDispatchesUsed: number;
   readonly totalOutputTokens: number;
@@ -108,8 +109,12 @@ export interface SessionProjection {
   readonly verificationAttempts: number;
   readonly verificationRecorded: boolean;
   readonly verificationSequence: number;
+  readonly lastVerificationResultHash: string | null;
   readonly reviewVerdict: string | null;
   readonly evaluationSequence: number;
+  readonly lastEvaluationId: string | null;
+  readonly lastEvaluationEventHash: string | null;
+  readonly lastEvaluationArtifactHash: string | null;
   readonly stopReason: LoopStopReason | null;
   readonly terminalReason: string | null;
   readonly updatedAt: string;
@@ -131,6 +136,7 @@ export function emptySessionProjection(sessionId: string): SessionProjection {
     lastSequence: 0,
     eventChainHead: EMPTY_HASH,
     limits: null,
+    createdAt: null,
     turnsUsed: 0,
     toolDispatchesUsed: 0,
     totalOutputTokens: 0,
@@ -148,8 +154,12 @@ export function emptySessionProjection(sessionId: string): SessionProjection {
     verificationAttempts: 0,
     verificationRecorded: false,
     verificationSequence: 0,
+    lastVerificationResultHash: null,
     reviewVerdict: null,
     evaluationSequence: 0,
+    lastEvaluationId: null,
+    lastEvaluationEventHash: null,
+    lastEvaluationArtifactHash: null,
     stopReason: null,
     terminalReason: null,
     updatedAt: "1970-01-01T00:00:00.0000000+00:00"
@@ -190,8 +200,6 @@ export function replaySession(
   let projection = emptySessionProjection(sessionId);
   let previousHash = EMPTY_HASH;
   let expectedSequence = 1;
-  let verification: SessionEvent | undefined;
-  let evaluation: SessionEvent | undefined;
 
   for (const event of events) {
     validateSessionEvent(event, sessionId, expectedSequence, previousHash);
@@ -201,44 +209,10 @@ export function replaySession(
     if (TERMINAL.has(projection.status)) {
       throw new SessionProjectionError("A terminal session cannot accept additional events.");
     }
-    validatePrerequisites(projection, event);
-
-    if (event.eventType === "verification.recorded") verification = event;
-    if (event.eventType === "evaluation.recorded") {
-      if (verification === undefined) {
-        throw new SessionProjectionError("Evaluation requires prior verification.");
-      }
-      if (
-        requiredString(event.payload, "eventChainHead") !== projection.eventChainHead ||
-        !stringArrayEquals(event.payload, "evidenceHashes", [
-          requiredString(verification.payload, "resultHash")
-        ])
-      ) {
-        throw new SessionProjectionError(
-          "Evaluation must bind the exact pre-evaluation event head and verification evidence."
-        );
-      }
-      evaluation = event;
-    }
-    if (event.eventType === "session.completed") {
-      if (
-        verification === undefined ||
-        evaluation === undefined ||
-        requiredString(evaluation.payload, "verdict") !== "approved" ||
-        requiredString(event.payload, "evaluationId") !==
-          requiredString(evaluation.payload, "evaluationId") ||
-        requiredString(event.payload, "evaluationEventHash") !== evaluation.eventHash ||
-        requiredString(event.payload, "evaluationArtifactHash") !==
-          requiredString(evaluation.payload, "artifactHash") ||
-        requiredString(event.payload, "verificationResultHash") !==
-          requiredString(verification.payload, "resultHash")
-      ) {
-        throw new SessionProjectionError(
-          "Completion must bind the exact approved evaluation and verification result."
-        );
-      }
-    }
-
+    // `applySessionEvent` calls `validatePrerequisites` itself, which is the single source of
+    // truth for every cross-event invariant (including the evaluation/completion hash bindings
+    // that used to be checked only here); replay adds no event-shape checks of its own so the
+    // two entry points can never accept different histories.
     projection = applySessionEvent(projection, event);
     expectedSequence++;
     previousHash = event.eventHash;
@@ -269,7 +243,8 @@ export function applySessionEvent(
         ...current,
         taskId: requiredString(event.payload, "taskId"),
         status: "running",
-        limits: parseLimits(event.payload)
+        limits: parseLimits(event.payload),
+        createdAt: event.occurredAt
       };
       break;
     case "turn.requested":
@@ -329,6 +304,7 @@ export function applySessionEvent(
         ...current,
         verificationRecorded: true,
         verificationSequence: event.sequence,
+        lastVerificationResultHash: requiredString(event.payload, "resultHash"),
         verificationAttempts: checkedIncrement(current.verificationAttempts),
         consecutiveFailedFixes:
           requiredInteger(event.payload, "passedChecks") ===
@@ -341,7 +317,10 @@ export function applySessionEvent(
       next = {
         ...current,
         reviewVerdict: requiredString(event.payload, "verdict"),
-        evaluationSequence: event.sequence
+        evaluationSequence: event.sequence,
+        lastEvaluationId: requiredString(event.payload, "evaluationId"),
+        lastEvaluationEventHash: event.eventHash,
+        lastEvaluationArtifactHash: requiredString(event.payload, "artifactHash")
       };
       break;
     case "loop.stopped": {
@@ -419,8 +398,8 @@ function validatePrerequisites(current: SessionProjection, event: SessionEvent):
       if (current.status !== "running" && current.status !== "evaluating") {
         throw new SessionProjectionError("Verification requires an active session.");
       }
-      if (current.workspaceMutations < 1) {
-        throw new SessionProjectionError("Verification requires at least one committed mutation.");
+      if (current.turnsUsed < 1) {
+        throw new SessionProjectionError("Verification requires at least one completed turn.");
       }
       if (requiredInteger(event.payload, "attemptNumber") !== current.verificationAttempts + 1) {
         throw new SessionProjectionError("Verification attempt number is out of sequence.");
@@ -430,6 +409,35 @@ function validatePrerequisites(current: SessionProjection, event: SessionEvent):
       if (current.status !== "evaluating" || !current.verificationRecorded) {
         throw new SessionProjectionError(
           "Evaluation requires recorded verification while evaluating."
+        );
+      }
+      if (
+        requiredString(event.payload, "eventChainHead") !== current.eventChainHead ||
+        !stringArrayEquals(event.payload, "evidenceHashes", [
+          requiredNonNull(current.lastVerificationResultHash, "lastVerificationResultHash")
+        ])
+      ) {
+        throw new SessionProjectionError(
+          "Evaluation must bind the exact pre-evaluation event head and verification evidence."
+        );
+      }
+      break;
+    case "session.completed":
+      if (
+        current.reviewVerdict !== "approved" ||
+        current.lastEvaluationId === null ||
+        current.lastEvaluationEventHash === null ||
+        current.lastEvaluationArtifactHash === null ||
+        current.lastVerificationResultHash === null ||
+        requiredString(event.payload, "evaluationId") !== current.lastEvaluationId ||
+        requiredString(event.payload, "evaluationEventHash") !== current.lastEvaluationEventHash ||
+        requiredString(event.payload, "evaluationArtifactHash") !==
+          current.lastEvaluationArtifactHash ||
+        requiredString(event.payload, "verificationResultHash") !==
+          current.lastVerificationResultHash
+      ) {
+        throw new SessionProjectionError(
+          "Completion must bind the exact approved evaluation and verification result."
         );
       }
       break;
@@ -443,9 +451,24 @@ function validatePrerequisites(current: SessionProjection, event: SessionEvent):
       }
       if (
         reason === "decision_budget_exhausted" &&
-        !(limits !== null && current.turnsUsed >= limits.maxTurns)
+        !(
+          limits !== null &&
+          (current.turnsUsed >= limits.maxTurns ||
+            current.toolDispatchesUsed >= limits.maxToolDispatches)
+        )
       ) {
         throw new SessionProjectionError("decision_budget_exhausted is not yet true.");
+      }
+      if (
+        reason === "wall_clock_exhausted" &&
+        !(
+          limits !== null &&
+          current.createdAt !== null &&
+          Date.parse(event.occurredAt) - Date.parse(current.createdAt) >=
+            limits.maxElapsedMilliseconds
+        )
+      ) {
+        throw new SessionProjectionError("wall_clock_exhausted is not yet true.");
       }
       if (
         reason === "oscillation_detected" &&
@@ -548,6 +571,11 @@ function requiredInteger(payload: SessionEventPayload, name: string): number {
     throw new SessionProjectionError(`Event payload property ${name} must be a safe integer.`);
   }
   return value as number;
+}
+
+function requiredNonNull(value: string | null, name: string): string {
+  if (value === null) throw new SessionProjectionError(`Projection field ${name} is required.`);
+  return value;
 }
 
 function stringArrayEquals(
