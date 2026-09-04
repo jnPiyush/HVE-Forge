@@ -1,5 +1,5 @@
 import { cp, lstat, mkdir, readdir, readFile, rename, rm, stat } from "node:fs/promises";
-import { dirname, join, relative, resolve, sep } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { canonicalizeValue, sha256Hex } from "../core/canonical-json.js";
 import { assertNoLinks, assertNoLinksInAbsolutePath, PathSafetyError } from "./path-safety.js";
 
@@ -132,6 +132,13 @@ async function copyDirectory(source: string, destination: string): Promise<void>
 function pathsOverlap(left: string, right: string): boolean {
   const fromLeft = relative(left, right);
   const fromRight = relative(right, left);
+  // On Windows, path.relative() between paths on different drives (for example the repository
+  // checkout on D: and the OS temp directory on C:, as GitHub Actions' hosted Windows runners are
+  // commonly configured) returns the second argument unchanged instead of throwing, because no
+  // relative path between the two roots exists. That unchanged absolute path never starts with
+  // ".." and would otherwise be misread as one path containing the other; paths on different
+  // roots can never overlap.
+  if (isAbsolute(fromLeft) || isAbsolute(fromRight)) return false;
   return (
     fromLeft === "" ||
     (!fromLeft.startsWith(`..${sep}`) && fromLeft !== "..") ||

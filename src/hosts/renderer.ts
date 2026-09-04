@@ -387,8 +387,8 @@ async function readSource(
   sourceRoot: string,
   relativePath: string
 ): Promise<{ readonly content: string; readonly hash: string }> {
-  const source = (await readHostTextFile(sourceRoot, relativePath)) as string;
-  const content = source.replaceAll("\r\n", "\n");
+  // readHostTextFile now normalizes CRLF to LF itself, so no further normalization is needed here.
+  const content = (await readHostTextFile(sourceRoot, relativePath)) as string;
   return { content, hash: sha256Hex(content) };
 }
 

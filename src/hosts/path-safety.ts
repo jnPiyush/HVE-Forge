@@ -83,7 +83,13 @@ export async function readHostTextFile(
   if (!metadata.isFile())
     throw new HostPathSafetyError(`Host path is not a file: ${relativePath}.`);
   await assertNoLinksInPath(target);
-  return readFile(target, "utf8");
+  const content = await readFile(target, "utf8");
+  // Every generated host artifact is written with LF line endings (writeHostTextFileAtomic never
+  // emits `\r`), but a checked-out working copy can still contain CRLF: git's autocrlf conversion
+  // on checkout is a per-machine/per-runner setting, not a property of the LF-normalized blob this
+  // repository stores. Normalizing here keeps content identity (and therefore hash comparisons
+  // used for conflict detection) independent of that checkout-time behavior.
+  return content.replaceAll("\r\n", "\n");
 }
 
 export async function writeHostTextFileAtomic(

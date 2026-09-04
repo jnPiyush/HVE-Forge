@@ -1,5 +1,5 @@
 import { lstat, readdir, readFile } from "node:fs/promises";
-import { dirname, join, relative, resolve, sep } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import type { ActivatedSkill, SkillCatalog, SkillDescriptor } from "../application/contracts.js";
 import { sha256Hex } from "../core/canonical-json.js";
 import { assertNoLinks } from "./path-safety.js";
@@ -165,7 +165,10 @@ function validateReferences(root: string, directory: string, content: string): v
     if (target === undefined || target === "" || /^[A-Za-z][A-Za-z0-9+.-]*:/.test(target)) continue;
     const resolved = resolve(directory, decodeURIComponent(target));
     const fromRoot = relative(root, resolved);
-    if (fromRoot === ".." || fromRoot.startsWith(`..${sep}`)) {
+    // On Windows, relative() between paths on different drives returns the second argument
+    // unchanged rather than throwing; that unchanged absolute path would otherwise slip past the
+    // ".." checks below even though it plainly escapes root.
+    if (fromRoot === ".." || fromRoot.startsWith(`..${sep}`) || isAbsolute(fromRoot)) {
       throw new Error(`Skill reference escapes the skills root: ${target}.`);
     }
   }
