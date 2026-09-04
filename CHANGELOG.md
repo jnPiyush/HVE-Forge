@@ -45,6 +45,16 @@ in-repository milestones tracked in `docs/execution/plans/EXEC-PLAN-004-cross-su
 
 - `scripts/check-package.mjs` incorrectly expected every `src/**/*.ts` file to emit
   its own compiled output; ambient `.d.ts` declaration files never do.
+- Schema-v2 reducer (`src/core/sessions.ts`) hardening found by an independent code
+  review: `wall_clock_exhausted` previously had no validation and accepted a forged
+  claim with zero elapsed time; `decision_budget_exhausted` recognized only the turn
+  budget, crashing `AgentLoop` on ordinary tool-dispatch-budget exhaustion;
+  `verification.recorded` required a workspace mutation, crashing on a turn that
+  correctly finishes with zero tool calls; and `evaluation.recorded`/
+  `session.completed` hash-chain bindings were enforced only by `replaySession`'s own
+  duplicate logic, not by `applySessionEvent`, the path the live loop actually uses.
+  `AgentLoop`'s event-append path also now validates each event through the reducer
+  before writing it to the durable log, so a rejected event can never be persisted.
 
 ### Known limitations
 
