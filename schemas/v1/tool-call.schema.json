@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hve-forge:schema:v1:tool-call",
+  "title": "HVE Forge Tool Call v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "toolCallId",
+    "runId",
+    "toolName",
+    "toolVersion",
+    "actionClass",
+    "arguments",
+    "argumentsHash",
+    "idempotencyKey",
+    "policyDecisionId",
+    "status",
+    "requestedAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "toolCallId": { "$ref": "#/$defs/id" },
+    "runId": { "$ref": "#/$defs/id" },
+    "toolName": { "$ref": "#/$defs/id" },
+    "toolVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "actionClass": {
+      "enum": ["read", "workspace_write", "external_write", "destructive", "privileged", "secret_bearing"]
+    },
+    "arguments": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "classification", "value"],
+        "properties": {
+          "name": { "$ref": "#/$defs/id" },
+          "classification": { "enum": ["public", "sensitive", "secret_reference"] },
+          "value": { "type": ["string", "integer", "boolean", "null"] }
+        }
+      }
+    },
+    "argumentsHash": { "$ref": "#/$defs/sha256" },
+    "idempotencyKey": { "$ref": "#/$defs/id" },
+    "policyDecisionId": { "$ref": "#/$defs/id" },
+    "status": { "enum": ["requested", "denied", "running", "succeeded", "failed", "cancelled", "timed_out"] },
+    "requestedAt": { "type": "string", "format": "date-time" },
+    "startedAt": { "type": ["string", "null"], "format": "date-time" },
+    "endedAt": { "type": ["string", "null"], "format": "date-time" },
+    "resultReference": { "type": ["string", "null"], "maxLength": 1024 }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

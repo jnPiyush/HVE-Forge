@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "hostId": "claude",
+  "profileVersion": "1.1.0",
+  "enforcementTier": "declarative",
+  "agentDirectory": ".claude/agents",
+  "agentSuffix": ".md",
+  "ruleDirectory": ".claude/rules",
+  "ruleSuffix": ".md",
+  "scanRoots": ["CLAUDE.md", ".claude/skills", ".claude/agents", ".claude/rules"],
+  "supportsHooks": true,
+  "hooksEnabledByDefault": false,
+  "supportsMcp": true
+}

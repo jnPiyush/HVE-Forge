@@ -1,0 +1,136 @@
+{
+  "schemaVersion": "1.0",
+  "rendererVersion": "0.2.0",
+  "agents": [
+    {
+      "logicalId": "agent.orchestrator",
+      "slug": "hve-orchestrator",
+      "name": "HVE Orchestrator",
+      "description": "Use for end-to-end software delivery that must plan, delegate focused work, preserve durable evidence, and stop on unresolved risk.",
+      "source": "hve/agents/orchestrator.md",
+      "tools": ["read", "search", "todo"],
+      "userInvocable": true
+    },
+    {
+      "logicalId": "agent.planner",
+      "slug": "hve-planner",
+      "name": "HVE Planner",
+      "description": "Use to research a repository, clarify requirements, compare alternatives, and produce a bounded implementation plan without changing production code.",
+      "source": "hve/agents/planner.md",
+      "tools": ["read", "search"],
+      "userInvocable": true
+    },
+    {
+      "logicalId": "agent.engineer",
+      "slug": "hve-engineer",
+      "name": "HVE Engineer",
+      "description": "Use to implement an approved bounded plan with test-first changes, minimal scope, deterministic evidence, and no unsupported capability expansion.",
+      "source": "hve/agents/engineer.md",
+      "tools": ["read", "search", "todo"],
+      "userInvocable": true
+    },
+    {
+      "logicalId": "agent.reviewer",
+      "slug": "hve-reviewer",
+      "name": "HVE Reviewer",
+      "description": "Use for independent read-only review of requirement fit, correctness, security, test evidence, operational risk, and release readiness.",
+      "source": "hve/agents/reviewer.md",
+      "tools": ["read", "search"],
+      "userInvocable": true
+    },
+    {
+      "logicalId": "agent.security",
+      "slug": "hve-security",
+      "name": "HVE Security",
+      "description": "Use to threat-model a change, inspect trust boundaries, challenge path and command safety, scan dependencies, and report exploitable findings.",
+      "source": "hve/agents/security.md",
+      "tools": ["read", "search"],
+      "userInvocable": true
+    },
+    {
+      "logicalId": "agent.tester",
+      "slug": "hve-tester",
+      "name": "HVE Tester",
+      "description": "Use to design and execute unit, integration, end-to-end, property, and adversarial tests against explicit acceptance criteria.",
+      "source": "hve/agents/tester.md",
+      "tools": ["read", "search"],
+      "userInvocable": true
+    },
+    {
+      "logicalId": "agent.release",
+      "slug": "hve-release",
+      "name": "HVE Release",
+      "description": "Use to validate reproducible packaging, supply-chain controls, CI evidence, rollback readiness, and a final go or no-go release decision.",
+      "source": "hve/agents/release.md",
+      "tools": ["read", "search"],
+      "userInvocable": true
+    }
+  ],
+  "rules": [
+    {
+      "logicalId": "rule.typescript",
+      "slug": "hve-typescript",
+      "description": "Apply strict TypeScript, ESM, runtime validation, dependency minimization, and deterministic error-handling rules to Node source files.",
+      "source": "hve/rules/typescript.md",
+      "applyTo": "**/*.ts",
+      "alwaysApply": false
+    },
+    {
+      "logicalId": "rule.tests",
+      "slug": "hve-tests",
+      "description": "Apply test-first behavior, acceptance-criterion traceability, adversarial coverage, and fresh verification requirements to automated tests.",
+      "source": "hve/rules/tests.md",
+      "applyTo": "tests/**/*",
+      "alwaysApply": false
+    }
+  ],
+  "routers": [
+    {
+      "logicalId": "router.portable",
+      "source": "hve/routers/root.md",
+      "targets": { "generic": "AGENTS.md" }
+    },
+    {
+      "logicalId": "router.vscode",
+      "source": "hve/routers/vscode.md",
+      "targets": { "vscode": ".github/copilot-instructions.md" }
+    },
+    {
+      "logicalId": "router.claude",
+      "source": "hve/routers/claude.md",
+      "targets": { "claude": "CLAUDE.md" }
+    }
+  ],
+  "skills": [
+    {
+      "logicalId": "skill.exact-text-replacement",
+      "name": "exact-text-replacement",
+      "source": "hve/skills/exact-text-replacement/SKILL.md"
+    },
+    {
+      "logicalId": "skill.hve-plan",
+      "name": "hve-plan",
+      "source": "hve/skills/hve-plan/SKILL.md"
+    },
+    {
+      "logicalId": "skill.hve-implement",
+      "name": "hve-implement",
+      "source": "hve/skills/hve-implement/SKILL.md"
+    },
+    {
+      "logicalId": "skill.hve-review",
+      "name": "hve-review",
+      "source": "hve/skills/hve-review/SKILL.md"
+    },
+    {
+      "logicalId": "skill.hve-security-audit",
+      "name": "hve-security-audit",
+      "source": "hve/skills/hve-security-audit/SKILL.md"
+    },
+    {
+      "logicalId": "skill.hve-release",
+      "name": "hve-release",
+      "source": "hve/skills/hve-release/SKILL.md"
+    }
+  ]
+}

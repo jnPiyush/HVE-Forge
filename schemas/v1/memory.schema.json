@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hve-forge:schema:v1:memory",
+  "title": "HVE Forge Structured Memory v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "memoryId",
+    "taskId",
+    "runId",
+    "kind",
+    "content",
+    "scope",
+    "confidenceBasisPoints",
+    "classification",
+    "provenance",
+    "expiresAt",
+    "deletable",
+    "contentHash",
+    "createdAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "memoryId": { "$ref": "#/$defs/id" },
+    "taskId": { "$ref": "#/$defs/id" },
+    "runId": {
+      "anyOf": [
+        { "$ref": "#/$defs/id" },
+        { "type": "null" }
+      ]
+    },
+    "kind": { "enum": ["decision", "fact", "failed_approach", "open_question", "next_action"] },
+    "content": { "type": "string", "minLength": 1, "maxLength": 8192 },
+    "scope": { "type": "string", "minLength": 1, "maxLength": 1024 },
+    "confidenceBasisPoints": { "type": "integer", "minimum": 0, "maximum": 10000 },
+    "classification": { "enum": ["public", "internal"] },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceType", "sourceReference", "sourceHash", "trust"],
+      "properties": {
+        "sourceType": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "sourceReference": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "sourceHash": { "$ref": "#/$defs/sha256" },
+        "trust": { "enum": ["trusted_operator", "repository", "tool_output", "model_output"] }
+      }
+    },
+    "expiresAt": { "type": ["string", "null"], "format": "date-time" },
+    "deletable": { "const": true },
+    "contentHash": { "$ref": "#/$defs/sha256" },
+    "createdAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hve-forge:schema:v1:handoff",
+  "title": "HVE Forge Reset Handoff v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "handoffId",
+    "taskId",
+    "runId",
+    "objective",
+    "contractReference",
+    "completedWork",
+    "workspace",
+    "changedFiles",
+    "commands",
+    "activeFindings",
+    "assumptions",
+    "budget",
+    "nextAction",
+    "artifactReferences",
+    "sourceEventHead",
+    "createdAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "handoffId": { "$ref": "#/$defs/id" },
+    "taskId": { "$ref": "#/$defs/id" },
+    "runId": { "$ref": "#/$defs/id" },
+    "objective": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "contractReference": { "type": "string", "minLength": 1, "maxLength": 1024 },
+    "completedWork": { "$ref": "#/$defs/stringList" },
+    "workspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceFixtureHash", "workspaceHash", "runRoot"],
+      "properties": {
+        "repository": { "type": ["string", "null"], "maxLength": 1024 },
+        "branch": { "type": ["string", "null"], "maxLength": 256 },
+        "commit": {
+          "anyOf": [
+            { "type": "string", "pattern": "^[a-f0-9]{40,64}$" },
+            { "type": "null" }
+          ]
+        },
+        "sourceFixtureHash": { "$ref": "#/$defs/sha256" },
+        "workspaceHash": { "$ref": "#/$defs/sha256" },
+        "runRoot": { "type": "string", "minLength": 1, "maxLength": 1024 }
+      }
+    },
+    "changedFiles": { "$ref": "#/$defs/stringList" },
+    "commands": {
+      "type": "array",
+      "maxItems": 512,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action", "result", "evidenceReference"],
+        "properties": {
+          "action": { "type": "string", "minLength": 1, "maxLength": 4096 },
+          "result": { "enum": ["passed", "failed", "blocked", "cancelled"] },
+          "evidenceReference": { "type": "string", "minLength": 1, "maxLength": 1024 }
+        }
+      }
+    },
+    "activeFindings": { "$ref": "#/$defs/stringList" },
+    "assumptions": { "$ref": "#/$defs/stringList" },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["remainingDecisions", "remainingToolDispatches", "remainingInputTokens", "remainingOutputTokens", "remainingCostMinorUnits", "remainingSeconds"],
+      "properties": {
+        "remainingDecisions": { "type": "integer", "minimum": 0 },
+        "remainingToolDispatches": { "type": "integer", "minimum": 0 },
+        "remainingInputTokens": { "type": "integer", "minimum": 0 },
+        "remainingOutputTokens": { "type": "integer", "minimum": 0 },
+        "remainingCostMinorUnits": { "type": "integer", "minimum": 0 },
+        "remainingSeconds": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "nextAction": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "artifactReferences": { "$ref": "#/$defs/stringList" },
+    "sourceEventHead": { "$ref": "#/$defs/sha256" },
+    "createdAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "stringList": {
+      "type": "array",
+      "maxItems": 512,
+      "items": { "type": "string", "minLength": 1, "maxLength": 8192 }
+    }
+  }
+}

@@ -1,0 +1,233 @@
+import { lstat, readdir } from "node:fs/promises";
+import { relative, resolve } from "node:path";
+import { loadHostCatalog } from "./catalog.js";
+import { assertNoLinksInPath, readHostTextFile, resolveHostPath } from "./path-safety.js";
+import { loadHostProfile } from "./profiles.js";
+import { renderWorkspace } from "./renderer.js";
+import type { EnforcementTier, HostCatalog, HostId, HostManifest, HostProfile } from "./types.js";
+
+export interface HostDiagnostic {
+  readonly hostId: HostId;
+  readonly profileVersion: string;
+  readonly enforcementTier: EnforcementTier;
+  readonly hooksSupported: boolean;
+  readonly hooksEnabled: boolean;
+  readonly mcpSupported: boolean;
+}
+
+export interface DuplicateDiagnostic {
+  readonly hostId: HostId;
+  readonly logicalId: string;
+  readonly paths: readonly string[];
+}
+
+export interface DoctorReport {
+  readonly ok: boolean;
+  readonly structuralOk: boolean;
+  readonly securityReadiness: "ready" | "advisory" | "blocked";
+  readonly nodeVersion: string;
+  readonly renderClean: boolean;
+  readonly hosts: readonly HostDiagnostic[];
+  readonly duplicates: readonly DuplicateDiagnostic[];
+  readonly warnings: readonly string[];
+}
+
+export async function inspectHostWorkspace(
+  sourceRoot: string,
+  targetRoot: string,
+  hostIds: readonly HostId[]
+): Promise<DoctorReport> {
+  const profiles = await Promise.all(hostIds.map((host) => loadHostProfile(sourceRoot, host)));
+  const check = await renderWorkspace({ sourceRoot, targetRoot, hosts: hostIds, mode: "check" });
+  const manifestContent = await readHostTextFile(targetRoot, ".hve/host-manifest.json");
+  const manifest = JSON.parse(manifestContent as string) as HostManifest;
+  const catalog = await loadHostCatalog(sourceRoot);
+  const duplicates = await findDuplicates(profiles, manifest, catalog, targetRoot);
+  const nodeMajor = Number.parseInt(process.versions.node.split(".")[0] ?? "0", 10);
+  const structuralOk = nodeMajor === 24 && check.clean && duplicates.length === 0;
+  const securityReadiness = !structuralOk
+    ? "blocked"
+    : profiles.every((profile) => profile.enforcementTier === "full")
+      ? "ready"
+      : "advisory";
+  const warnings = profiles.flatMap((profile) =>
+    profile.enforcementTier === "full"
+      ? []
+      : [
+          `${profile.hostId}: enforcement is ${profile.enforcementTier}; structural health does not prove kernel mediation.`
+        ]
+  );
+  return {
+    ok: securityReadiness === "ready",
+    structuralOk,
+    securityReadiness,
+    nodeVersion: process.versions.node,
+    renderClean: check.clean,
+    hosts: profiles.map((profile) => ({
+      hostId: profile.hostId,
+      profileVersion: profile.profileVersion,
+      enforcementTier: profile.enforcementTier,
+      hooksSupported: profile.supportsHooks,
+      hooksEnabled: profile.hooksEnabledByDefault,
+      mcpSupported: profile.supportsMcp
+    })),
+    duplicates,
+    warnings
+  };
+}
+
+async function findDuplicates(
+  profiles: readonly HostProfile[],
+  manifest: HostManifest,
+  catalog: HostCatalog,
+  targetRoot: string
+): Promise<DuplicateDiagnostic[]> {
+  const result: DuplicateDiagnostic[] = [];
+  const manifestIds = new Map(manifest.outputs.map((output) => [output.path, output.logicalId]));
+  const knownNames = buildKnownNames(catalog);
+  for (const profile of profiles) {
+    const byLogicalId = new Map<string, string[]>();
+    const files = await collectScannedFiles(targetRoot, profile.scanRoots);
+    for (const path of files) {
+      const content = (await readHostTextFile(targetRoot, path)) as string;
+      const logicalId =
+        manifestIds.get(path) ??
+        extractProvenanceId(content) ??
+        inferLogicalId(content, knownNames);
+      if (logicalId === null) continue;
+      const paths = byLogicalId.get(logicalId) ?? [];
+      paths.push(path);
+      byLogicalId.set(logicalId, paths);
+    }
+    for (const [logicalId, paths] of byLogicalId) {
+      if (paths.length > 1) {
+        result.push({ hostId: profile.hostId, logicalId, paths: paths.sort() });
+      }
+    }
+  }
+  return result.sort((left, right) =>
+    `${left.hostId}:${left.logicalId}`.localeCompare(`${right.hostId}:${right.logicalId}`)
+  );
+}
+
+function buildKnownNames(catalog: HostCatalog): ReadonlyMap<string, string | null> {
+  const names = new Map<string, string | null>();
+  for (const item of catalog.agents) {
+    addKnownName(names, item.slug, item.logicalId);
+    addKnownName(names, item.name, item.logicalId);
+  }
+  for (const item of catalog.skills) addKnownName(names, item.name, item.logicalId);
+  for (const item of catalog.rules) addKnownName(names, item.description, item.logicalId);
+  return names;
+}
+
+function addKnownName(names: Map<string, string | null>, name: string, logicalId: string): void {
+  const current = names.get(name);
+  names.set(name, current === undefined || current === logicalId ? logicalId : null);
+}
+
+function extractProvenanceId(content: string): string | null {
+  return /^<!-- Generated by HVE-Forge; logical-id: ([a-z0-9.-]+);/mu.exec(content)?.[1] ?? null;
+}
+
+function inferLogicalId(
+  content: string,
+  knownNames: ReadonlyMap<string, string | null>
+): string | null {
+  for (const field of ["name", "description"]) {
+    const value = readFrontmatterScalar(content, field);
+    const logicalId = value === null ? null : (knownNames.get(value) ?? null);
+    if (logicalId !== null) return logicalId;
+  }
+  return null;
+}
+
+function readFrontmatterScalar(content: string, field: string): string | null {
+  const lines = content.replaceAll("\r\n", "\n").split("\n");
+  if (lines[0] !== "---") return null;
+  const end = lines.indexOf("---", 1);
+  if (end < 2) return null;
+  let value: string | null = null;
+  for (let index = 1; index < end; index += 1) {
+    const match = /^([A-Za-z0-9-]+):(?:\s*(.*))?$/u.exec(lines[index] as string);
+    if (match?.[1] !== field) continue;
+    const raw = match[2] ?? "";
+    if (/^[>|][+-]?$/u.test(raw)) {
+      const block: string[] = [];
+      for (index += 1; index < end; index += 1) {
+        const blockLine = lines[index] as string;
+        if (blockLine.trim() !== "" && !blockLine.startsWith(" ")) break;
+        block.push(blockLine.trim());
+      }
+      value = raw.startsWith(">") ? block.filter(Boolean).join(" ") : block.join("\n");
+    } else {
+      value = raw.trim();
+    }
+    break;
+  }
+  if (value === null) return null;
+  if (value.startsWith('"')) {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      return typeof parsed === "string" ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+  return value.startsWith("'") && value.endsWith("'") ? value.slice(1, -1) : value;
+}
+
+async function collectScannedFiles(
+  targetRoot: string,
+  scanRoots: readonly string[]
+): Promise<readonly string[]> {
+  const files = new Set<string>();
+  for (const scanRoot of scanRoots) {
+    const absolute = resolveHostPath(targetRoot, scanRoot);
+    await assertNoLinksInPath(absolute);
+    const rootStat = await lstatOptional(absolute);
+    if (rootStat === null) continue;
+    if (rootStat.isFile()) {
+      files.add(normalizePath(relative(resolve(targetRoot), absolute)));
+      continue;
+    }
+    if (rootStat.isDirectory()) await collectDirectoryFiles(targetRoot, absolute, files);
+  }
+  return [...files].sort();
+}
+
+async function collectDirectoryFiles(
+  targetRoot: string,
+  directory: string,
+  files: Set<string>
+): Promise<void> {
+  const entries = await readdir(directory, { withFileTypes: true });
+  entries.sort((left, right) => left.name.localeCompare(right.name));
+  for (const entry of entries) {
+    const path = resolve(directory, entry.name);
+    await assertNoLinksInPath(path);
+    const metadata = await lstat(path);
+    if (metadata.isDirectory()) {
+      await collectDirectoryFiles(targetRoot, path, files);
+    } else if (metadata.isFile()) {
+      files.add(normalizePath(relative(resolve(targetRoot), path)));
+    }
+  }
+}
+
+async function lstatOptional(path: string): Promise<Awaited<ReturnType<typeof lstat>> | null> {
+  try {
+    return await lstat(path);
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+function normalizePath(path: string): string {
+  return path.replaceAll("\\", "/").replace(/\/$/u, "");
+}
+
+function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && "code" in error;
+}

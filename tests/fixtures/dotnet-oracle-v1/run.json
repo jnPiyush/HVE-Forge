@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0",
+  "sourceFixtureHash": "f9f8fba2e7ca1c6e6ed9c0b38e2bcab86a3eb1ba80b51ff500fdb6ce58ee797b",
+  "workspaceHash": "9b0f3338729cae89559a89a3d5b457bbe7669fbabe08a02cc575bd3760cce655",
+  "verificationResultHash": "9ca504cda6406a9a68996cd1aee7c37ec19ef0c487779da8123e968b17594953",
+  "semanticTraceHash": "fafa3dfc9a9510d543c15b8a53546de13fa23d3b35ca198f828bcbd9e9f854dd",
+  "legacySkillHash": "ee65e2bc2d319b5b78840465dcd02e50b2c87153858b4f0bf440125771d32315",
+  "sandboxProfile": "windows-workspace-confinement-no-process-network",
+  "eventCount": 16,
+  "targetText": "Hello from HVE-Forge\n"
+}

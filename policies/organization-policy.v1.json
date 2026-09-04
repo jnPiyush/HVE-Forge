@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "policyVersion": "1.0.0",
+  "defaultEffect": "deny",
+  "defaultRuleId": "default-deny",
+  "rules": [
+    {
+      "ruleId": "allow-workspace-read-file",
+      "effect": "allow",
+      "toolName": "workspace.read_file",
+      "actionClass": "read"
+    },
+    {
+      "ruleId": "allow-workspace-list-directory",
+      "effect": "allow",
+      "toolName": "workspace.list_directory",
+      "actionClass": "read"
+    },
+    {
+      "ruleId": "allow-workspace-search-text",
+      "effect": "allow",
+      "toolName": "workspace.search_text",
+      "actionClass": "read"
+    },
+    {
+      "ruleId": "allow-exact-text-replace",
+      "effect": "allow",
+      "toolName": "workspace.replace_exact_text",
+      "actionClass": "workspace_write"
+    }
+  ]
+}

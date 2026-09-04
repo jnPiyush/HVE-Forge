@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hve-forge:schema:v1:checkpoint",
+  "title": "HVE Forge Checkpoint v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "checkpointId",
+    "runId",
+    "sequence",
+    "eventChainHead",
+    "projectionHash",
+    "workspaceHash",
+    "budget",
+    "openFindings",
+    "nextAction",
+    "createdAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "checkpointId": { "$ref": "#/$defs/id" },
+    "runId": { "$ref": "#/$defs/id" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "eventChainHead": { "$ref": "#/$defs/sha256" },
+    "projectionHash": { "$ref": "#/$defs/sha256" },
+    "workspaceHash": { "$ref": "#/$defs/sha256" },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decisionsUsed", "toolDispatchesUsed", "inputTokensUsed", "outputTokensUsed", "costMinorUnits", "elapsedMilliseconds"],
+      "properties": {
+        "decisionsUsed": { "type": "integer", "minimum": 0 },
+        "toolDispatchesUsed": { "type": "integer", "minimum": 0 },
+        "inputTokensUsed": { "type": "integer", "minimum": 0 },
+        "outputTokensUsed": { "type": "integer", "minimum": 0 },
+        "costMinorUnits": { "type": "integer", "minimum": 0 },
+        "elapsedMilliseconds": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "openFindings": {
+      "type": "array",
+      "maxItems": 512,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "nextAction": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "createdAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hve-forge:schema:v1:task",
+  "title": "HVE Forge Task v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "taskId",
+    "ownerId",
+    "objective",
+    "riskClass",
+    "status",
+    "createdAt",
+    "updatedAt",
+    "workContractHash",
+    "budgets",
+    "requestedCapabilities"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "taskId": { "$ref": "#/$defs/id" },
+    "ownerId": { "$ref": "#/$defs/id" },
+    "objective": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "riskClass": {
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "status": {
+      "enum": [
+        "queued",
+        "preparing",
+        "researching",
+        "planning",
+        "awaiting_approval",
+        "executing",
+        "verifying",
+        "reviewing",
+        "completed",
+        "blocked",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "workContractHash": { "$ref": "#/$defs/sha256" },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxDecisions", "maxToolDispatches", "maxElapsedSeconds", "maxInputTokens", "maxOutputTokens", "maxCostMinorUnits"],
+      "properties": {
+        "maxDecisions": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "maxToolDispatches": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "maxElapsedSeconds": { "type": "integer", "minimum": 1, "maximum": 604800 },
+        "maxInputTokens": { "type": "integer", "minimum": 0 },
+        "maxOutputTokens": { "type": "integer", "minimum": 0 },
+        "maxCostMinorUnits": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "requestedCapabilities": {
+      "type": "array",
+      "maxItems": 128,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

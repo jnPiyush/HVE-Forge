@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hve-forge.dev/schemas/v2/trust-envelope.schema.json",
+  "title": "HVE-Forge Trust Envelope v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "origin",
+    "trust",
+    "sourceReference",
+    "contentHash",
+    "includedHash",
+    "byteLength",
+    "includedByteLength",
+    "truncated",
+    "content"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "2.0" },
+    "origin": {
+      "enum": [
+        "distribution_instruction",
+        "operator_task",
+        "workspace_instruction",
+        "workspace_file",
+        "search_result",
+        "tool_result",
+        "model_output"
+      ]
+    },
+    "trust": {
+      "enum": [
+        "trusted_distribution",
+        "operator_request",
+        "untrusted_repository",
+        "untrusted_tool",
+        "untrusted_model"
+      ]
+    },
+    "sourceReference": { "type": "string", "minLength": 1, "maxLength": 1024 },
+    "contentHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "includedHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "byteLength": { "type": "integer", "minimum": 0, "maximum": 4194304 },
+    "includedByteLength": { "type": "integer", "minimum": 0, "maximum": 1048576 },
+    "truncated": { "type": "boolean" },
+    "content": { "type": "string" }
+  }
+}

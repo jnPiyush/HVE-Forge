@@ -1,0 +1,12 @@
+# Normalize all text files to LF in the repository regardless of the platform or editor that
+# committed or checked them out. Without this, GitHub Actions' Windows runners (whose default
+# git install has core.autocrlf=true) and its Linux/macOS runners (which do not convert line
+# endings on checkout) produce different working-tree bytes from the same LF-stored blobs,
+# which broke both `biome format --check` (hardcoded to `lf`) and the host-renderer's
+# self-render idempotence check on a completely fresh clone.
+* text=auto eol=lf
+
+# Binary assets must never be subject to line-ending normalization.
+*.png binary
+*.zip binary
+*.ico binary

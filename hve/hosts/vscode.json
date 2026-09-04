@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "hostId": "vscode",
+  "profileVersion": "1.1.0",
+  "enforcementTier": "declarative",
+  "agentDirectory": ".github/agents",
+  "agentSuffix": ".agent.md",
+  "ruleDirectory": ".github/instructions",
+  "ruleSuffix": ".instructions.md",
+  "scanRoots": ["AGENTS.md", ".agents/skills", ".claude/skills", ".github/skills", ".claude/agents", ".github/agents", ".github/instructions", ".github/copilot-instructions.md"],
+  "supportsHooks": true,
+  "hooksEnabledByDefault": false,
+  "supportsMcp": true
+}

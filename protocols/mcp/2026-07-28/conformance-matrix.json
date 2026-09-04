@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "protocol": "mcp",
+  "protocolVersion": "2026-07-28",
+  "retrievedAt": "2026-08-31",
+  "implementationStatus": "contract-only",
+  "core": {
+    "perRequestMeta": "shape-validated",
+    "serverDiscover": "method-shape-validated-optional",
+    "resultType": "shape-validated",
+    "inputRequests": "input-response-shape-validated",
+    "requestStateIntegrity": "cryptographically-tested-offline",
+    "subscriptionsListen": "method-shape-validated",
+    "cursorTtlAndCacheScope": "cryptographically-tested-offline",
+    "jsonSchema202012": "remote-ref-policy-tested",
+    "remoteRefDefault": "disabled",
+    "explicitStateHandles": "contract-only",
+    "progress": "method-shape-validated",
+    "cancellation": "method-shape-validated",
+    "errors": "shape-validated",
+    "elicitationConsent": "method-shape-validated"
+  },
+  "authorization": {
+    "protectedResourceMetadata": "contract-only",
+    "authorizationServerDiscovery": "contract-only",
+    "pkce": "contract-only",
+    "resourceIndicators": "contract-only",
+    "leastPrivilegeStepUp": "contract-only",
+    "issuerValidation": "contract-only",
+    "audienceValidation": "contract-only"
+  },
+  "extensions": {
+    "tasks": "disabled-by-default; tasks/get request shape requires explicit host and request capability flags",
+    "skills": "experimental-disabled",
+    "apps": "disabled-pending-ui-security-review"
+  },
+  "deprecated": ["roots", "sampling", "logging", "legacy-sse", "dynamic-client-registration-dependency"],
+  "networkExecutionEnabled": false
+}

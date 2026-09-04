@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hve-forge:schema:v1:evidence",
+  "title": "HVE Forge Evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "evidenceId",
+    "runId",
+    "evidenceClass",
+    "producer",
+    "action",
+    "workingDirectory",
+    "startedAt",
+    "endedAt",
+    "expected",
+    "observed",
+    "checks",
+    "result",
+    "policyVersion",
+    "policyHash",
+    "instructionDigest",
+    "providerDecisionHash",
+    "normalizedArgumentsHash",
+    "idempotencyKey",
+    "beforeFileHash",
+    "afterFileHash",
+    "verifier",
+    "sourceFixtureHash",
+    "workspaceHash",
+    "eventChainHead",
+    "artifactHashes",
+    "freshness"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "evidenceId": { "$ref": "#/$defs/id" },
+    "runId": { "$ref": "#/$defs/id" },
+    "evidenceClass": { "enum": ["implementation", "verification", "runtime", "security", "review"] },
+    "producer": { "$ref": "#/$defs/id" },
+    "action": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "workingDirectory": { "type": "string", "minLength": 1, "maxLength": 1024 },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "endedAt": { "type": "string", "format": "date-time" },
+    "expected": { "type": "string", "minLength": 1, "maxLength": 8192 },
+    "observed": { "type": "string", "minLength": 1, "maxLength": 8192 },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["criterionId", "passed", "observation"],
+        "properties": {
+          "criterionId": { "$ref": "#/$defs/id" },
+          "passed": { "type": "boolean" },
+          "observation": { "type": "string", "minLength": 1, "maxLength": 4096 }
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "exitCode", "discoveredTests", "passedTests", "cached"],
+      "properties": {
+        "status": { "enum": ["passed", "failed", "blocked", "cancelled"] },
+        "exitCode": { "type": ["integer", "null"] },
+        "discoveredTests": { "type": ["integer", "null"], "minimum": 0 },
+        "passedTests": { "type": ["integer", "null"], "minimum": 0 },
+        "cached": { "type": "boolean" }
+      }
+    },
+    "policyVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "policyHash": { "$ref": "#/$defs/sha256" },
+    "instructionDigest": { "$ref": "#/$defs/sha256" },
+    "providerDecisionHash": { "$ref": "#/$defs/sha256" },
+    "normalizedArgumentsHash": { "$ref": "#/$defs/sha256" },
+    "idempotencyKey": { "$ref": "#/$defs/id" },
+    "beforeFileHash": {
+      "anyOf": [
+        { "$ref": "#/$defs/sha256" },
+        { "type": "null" }
+      ]
+    },
+    "afterFileHash": {
+      "anyOf": [
+        { "$ref": "#/$defs/sha256" },
+        { "type": "null" }
+      ]
+    },
+    "verifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity", "version", "resultHash"],
+      "properties": {
+        "identity": { "$ref": "#/$defs/id" },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "resultHash": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "sourceFixtureHash": { "$ref": "#/$defs/sha256" },
+    "sourceCommit": {
+      "anyOf": [
+        { "type": "string", "pattern": "^[a-f0-9]{40,64}$" },
+        { "type": "null" }
+      ]
+    },
+    "workspaceHash": { "$ref": "#/$defs/sha256" },
+    "eventChainHead": { "$ref": "#/$defs/sha256" },
+    "artifactHashes": {
+      "type": "array",
+      "maxItems": 1024,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/sha256" }
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capturedAt", "validUntilMutation"],
+      "properties": {
+        "capturedAt": { "type": "string", "format": "date-time" },
+        "validUntilMutation": { "type": "boolean", "const": true }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

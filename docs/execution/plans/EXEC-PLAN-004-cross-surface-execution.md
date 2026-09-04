@@ -1,0 +1,201 @@
+<!-- Purpose: Living execution plan for the ADR-004 cross-surface harness expansion. -->
+
+# EXEC-PLAN-004: Cross-Surface Harness Expansion
+
+**Issue:** #2
+**ADR:** `docs/artifacts/adr/ADR-004-cross-surface-execution.md`
+**Spec:** `docs/artifacts/specs/SPEC-004-cross-surface-execution.md`
+**Status:** Active
+
+## Purpose
+
+Turn HVE-Forge from a deterministic control plane into a working coding harness across VS Code, Cursor, Claude Code, and Cowork, using GitHub Copilot as the default VS Code provider, adopting proven concepts from AgentX and gstack without adding runtime dependencies to the kernel.
+
+## Alternatives Considered
+
+Recorded before planning, per the pre-plan gate.
+
+1. **Standalone runtime with direct API clients.** Rejected as default: credential custody, spend authorization, and a consent UX the harness would have to build and defend.
+2. **MCP server only.** Rejected as the architecture: MCP carries tools but not the instruction, agent, rule, or lifecycle plane, and supplies no model.
+3. **Shell out to vendor CLIs.** Rejected as primary: unstable text contract, no typed tool-call protocol, no controllable consent.
+4. **Fork or vendor AgentX or gstack.** Rejected: both are process-and-prompt harnesses without a deterministic kernel; adopting concepts preserves the kernel's guarantees.
+5. **VS Code extension supplying Copilot, layered over optional API adapters behind one port.** Selected.
+
+## Progress
+
+| Step | Description | Status |
+|---|---|---|
+| 0 | Research AgentX, gstack, VS Code LM and Tool APIs, Cowork packaging | Complete |
+| 0a | ADR-004 and Model Council recorded | Complete |
+| 0b | SPEC-004 contracts recorded | Complete |
+| 0c | End-user, security, and release review | Complete - NO-GO findings recorded |
+| 0d | Security-order amendment and test baseline | Complete - baseline grew from 221 to 300 |
+| 1 | Installed distribution identity and packed onboarding | Complete |
+| 2 | Safe declarative host profiles and honest doctor | Complete |
+| 3 | Trust envelopes and bounded context assembly | Complete |
+| 4 | Read/list/search tools and immutable dispatcher | Complete |
+| 5 | Atomic-turn provider contract and recorded compatibility | Complete |
+| 6 | Bounded durable agent loop and v2 protocol | Complete for the demo task shape; general work contracts deferred |
+| 7 | Working-tree fingerprint and evidence freshness | Complete for the schema-v2 completion gate; v1 stays frozen by design |
+| 8 | Native VS Code/Copilot vertical slice | Complete for model-selection and bounded-loop wiring; native mutation confirmation, chat participant, and a live Extension Development Host smoke test remain open |
+| 9 | Cowork package target | Complete |
+| 10 | Release hardening and provenance | Complete locally (package metadata, changelog, security policy, tracked-input gate, digest manifest, CI wiring); remote CI has not yet evaluated this candidate |
+| 11 | Isolation backend and execute-class tools | Deferred pending separate approval |
+
+## Context and Orientation
+
+Current verified state at the start of step 1: 203 tests across 13 files passed; typecheck and lint clean; coverage 90.22 percent statements with all five layers at or above 80 percent; zero runtime dependencies; supply-chain gate passing across 122 packages with SHA-512 and four approved origins.
+
+After the registry landed: 221 tests across 14 files pass at 90.57 percent statements and 85.00 percent branches, with the registry module covering fail-closed admission, snapshot-based validation, deep immutability, and locale-independent ordering.
+
+Fresh end-user release review added five security blockers: packaged initialization reverses distribution and target trust, native host tools bypass the kernel, local evidence is not commit-authenticated or durably fresh, injection controls were scheduled after live retrieval, and almost all candidate files are untracked. Functional review also confirmed that the current runtime cannot perform arbitrary coding work. The local quality baseline remains strong: 221 tests pass, aggregate coverage is 90.57 percent statements and 85.00 percent branches, every production layer exceeds 80 percent, a clean-copy install passes, and repeated npm packs are byte-identical.
+
+Current verified state after steps 1-10: 335 tests across 36 files pass; typecheck, lint, and format are clean; every production layer (core, application, adapters, hosts, cli) is at or above 80 percent coverage in all four dimensions; `npm run quality` passes end to end including the packed-consumer poisoned-target test, host render/duplicate checks, 245 ASCII paths, the candidate-secret scan, the 122-package SHA-512 supply-chain gate, exact 329-file package-inventory allowlist, a 71-component SBOM, and `npm audit` with zero vulnerabilities. All five prior security blockers are addressed: distribution assets resolve from the installed module location and reject a poisoned target (slice 1); default generated agents carry no native privileged tool and `doctor` reports declarative readiness honestly (slice 2); every model-bound byte carries an origin/trust envelope (slice 3); the bounded loop, not native host tools, owns tool dispatch (slices 4-6); and evidence freshness is graded `FRESH`/`STALE`/`MISSING` against an exclusion-aware working-tree fingerprint (slice 7). The candidate is fully committed on `feature/2-production-harness` (previously ~226 paths were untracked) and pushed as PR #3. An independent code-review pass of the schema-v2 reducer after slice 6-10 completion found and fixed four further defects (see Surprises and Discoveries). The PR's first remote CI run (the first time this quality workflow had ever executed on GitHub-hosted runners for this candidate) failed all three OS jobs on five further, genuinely pre-existing cross-platform defects invisible in this session's single-OS development environment; all five are now fixed and the full matrix (macos-latest, windows-latest, ubuntu-latest, and the package job) is green, with CodeQL and provenance attestation correctly deferred to a trusted push per this repository's own policy.
+
+## Plan of Work
+
+Sequenced by trust boundary and then blast radius. Each slice is independently testable and rollback-safe. Live model access remains disabled through slice 7.
+
+### Slice 0: Contract correction
+
+Amend the ADR, council, specification, threat model, controls matrix, plan, and progress log so distribution trust and host safety come first, trust envelopes precede live retrieval, provider sends require receipts, v1 replay remains immutable, and v2 owns multi-turn behavior.
+
+Exit gate: documents make no unsupported current-state claim; `check:ascii` and the complete quality chain pass.
+
+### Slice 1: Installed distribution identity
+
+Resolve canonical assets from the installed module location, never from the target workspace. Retain any compatibility argument only as a deprecated workspace/fixture alias, not an authority-root selector. Add a packed-consumer test with an ordinary target and a poisoned lookalike target.
+
+Exit gate: installed `hve init` and `doctor` work from an unrelated consumer without internal paths; poison bytes never reach generated output; runtime dependencies remain zero.
+
+### Slice 2: Safe host profiles
+
+Remove native edit, process, browser, and web tools from default generated agents. Add machine-readable structural and security readiness to doctor. Current profiles are declarative until a mediated runtime is proven.
+
+Exit gate: no generated default agent grants a native privileged capability; doctor cannot report security-ready when mediation is absent or bypass exists; renderer ownership and duplicate checks still pass.
+
+### Slice 3: Trust envelopes
+
+Add immutable origin and trust contracts, bounded context assembly, deterministic elision, and provider-egress intent. Repository text can define task data but cannot become policy, approval, distribution instruction, or tool registration.
+
+Exit gate: every model-bound byte has origin, trust, hash, byte length, and truncation metadata; raw workspace strings are rejected at the model boundary; injection fixtures cannot alter authority.
+
+### Slice 4: Tools and dispatcher
+
+Implement bounded strict-UTF-8 read, directory-list, and literal-search tools. Bind every descriptor one-to-one with a handler in an immutable dispatcher. The dispatcher validates calls from `unknown`, reevaluates policy immediately before effects, enforces cancellation and output bounds, and wraps results as untrusted data. Route exact replacement through the same path.
+
+Initial limits: one MiB source or target files, 64 KiB returned output, 500 directory entries, 200 search matches, 2,000 scanned files, and 16 MiB scanned bytes. Secret-like files, `.git`, and harness-private state are denied.
+
+Exit gate: all four tools execute only through registry admission; unknown, denied, malformed, oversized, traversal, device, ADS, link, and junction inputs cause no handler effect.
+
+### Slice 5: Atomic-turn provider
+
+Generalize the provider to one validated atomic turn containing bounded assistant text, ordered tool calls, normalized usage, finish reason, model identity, and hashes. Preserve `RecordedProvider` behavior and v1 fixture replay. Copilot cost mode is host-managed and never invents monetary cost.
+
+Exit gate: provider output cannot execute tools; malformed or oversized turns fail closed; cancellation propagates; v1 replay performs zero provider calls.
+
+### Slice 6: Durable bounded loop
+
+Create schema-v2 run contracts and one application-owned loop. Before a provider call, validate budgets, assemble context, and flush a receipt. Before a tool effect, validate budgets, resolve admission, reevaluate policy, and dispatch. Stop on completion, cancellation, time, turn, dispatch, token, cost, repeated signature, A-B-A state oscillation, or three failed fixes.
+
+Safe defaults: eight turns, sixteen dispatches, five minutes, provider-capped input, 16,000 output tokens, repeated-signature threshold two, oscillation window six, and no fourth failed fix.
+
+Exit gate: property tests prove invocation counts never exceed limits; every run has one typed terminal reason; interruption/resume duplicates neither provider turns nor effects; v1 replay remains unchanged.
+
+### Slice 7: Evidence freshness
+
+Fingerprint all relevant tracked and untracked regular files with fixed code-owned exclusions. Grade evidence exactly `FRESH`, `STALE`, or `MISSING`. Revalidate inspect, handoff, resume, completion, and archive.
+
+Exit gate: unseen untracked files invalidate evidence; completion and release archive accept `FRESH` only; bounded inventory failures block rather than hash a partial tree.
+
+### Slice 8: Native VS Code/Copilot vertical slice
+
+Add a thin VS Code composition root and provider adapter using host APIs only. Model selection occurs only from a user command or chat request. Content and mutation tools remain private to the HVE loop; only metadata status may be globally contributed. Local file workspaces are the only write-capable scheme, multi-root requires explicit choice, and exact replacement requires native confirmation.
+
+Exit gate: fake-host tests cover empty model selection, cancellation, wrong vendor, stream errors, token limits, receipt failure, no secret access, remote-workspace denial, and canonical tool-ID mapping. A staged extension contains one compiled kernel and no runtime dependencies or bundled `node_modules`.
+
+### Slice 9: Cowork package
+
+Package only instruction-only eligible skills with a strict root manifest and required icon dimensions. No connector or MCP transport ships in the first Cowork artifact.
+
+Exit gate: strict package inventory, folder/frontmatter identity, link rejection, terminal-dependent skill exclusion, and deterministic archive checks pass.
+
+### Slice 10: Release hardening
+
+Add package source/license/support metadata, changelog, security policy, consumer installation and removal guidance, tracked-input gate, installed smoke tests, exact artifact digest manifest, and commit-bound CI provenance. MCP transport, direct providers, network tools, and execute tools remain deferred.
+
+Exit gate: clean immutable commit; packed consumer tests on Windows, Linux, and macOS; quality, CodeQL, package, SBOM, extension, Cowork, independent security, independent functional review, provenance, upgrade, and rollback gates all pass for the same bytes.
+
+## Validation and Acceptance
+
+Every step must leave the repository green on the existing quality chain: toolchain, typecheck, format, lint, coverage, layer coverage, build, boundaries, hosts, ASCII, secrets, supply chain, audit, package inventory, and SBOM.
+
+The acceptance criteria in SPEC-004 section 9 are the authoritative gate list. Criteria are referenced by identifier rather than by range so that adding one cannot silently narrow the gate.
+
+## Idempotence and Recovery
+
+Each slice is independently revertible. Distribution and host-profile rollback uses only manifest-owned generated files. Trust, tools, provider, loop, and freshness features remain disabled unless their slice passes. Schema-v1 history is never rewritten. The extension and Cowork artifacts can be removed without changing the CLI replay path.
+
+If a step fails its exit gate twice, stop and investigate rather than attempting a third fix, per the rule adopted in step 3.
+
+## Decision Log
+
+| Date | Decision | Rationale |
+|---|---|---|
+| 2026-09-02 | GitHub Copilot via `vscode.lm` is the default VS Code provider | Removes credential custody and spend authorization from the default path while improving adoption |
+| 2026-09-02 | Tools are capability-classed, not individually registered | A read tool and a shell tool must not share an admission path |
+| 2026-09-02 | Execute class stays unregistered until isolation exists | A real model plus process spawn without a sandbox is the highest-risk configuration in the design |
+| 2026-09-02 | Cowork is a package target, not a discovery root | Its managed container has no scan path, no terminal, and consumes an uploaded archive |
+| 2026-09-02 | Surfaces are composition roots, never runtimes | Two runtimes would eventually answer the same policy question differently |
+| 2026-09-02 | Oscillation and failed-fix controls ship with the loop | Retrofitting them after multi-decision execution widens exposure |
+| 2026-09-02 | Capability gates require the literal boolean `true` | A parsed-configuration string such as "false" is truthy and would otherwise open the execute path |
+| 2026-09-02 | Descriptors are snapshotted before validation | An accessor-backed descriptor could otherwise report `read` during validation and `execute` during admission |
+| 2026-09-02 | Ordering uses code-unit comparison, not `localeCompare` | ICU collation varies by host and would break replay equivalence |
+| 2026-09-02 | The extension uses built-in VS Code APIs only, with no runtime dependency and no bundler | Keeps the whole product at zero runtime dependencies so the existing supply-chain gate covers the extension without surface-specific policy |
+| 2026-09-02 | The extension loads the same compiled kernel as the CLI rather than resolving an installed package | Closes the kernel-resolution question originally recorded in SPEC-004 section 10; one build means the two surfaces cannot answer a policy question differently |
+| 2026-09-02 | Git state is an optional capability that degrades rather than fails | The built-in Git extension is not guaranteed present, and adding a Git library would break the zero-dependency rule |
+| 2026-09-02 | Application-owned atomic turns, not provider-owned loops | One deterministic state machine retains policy, budget, receipt, replay, and recovery authority |
+| 2026-09-02 | Distribution assets resolve module-relatively | A target repository is untrusted input and must never select harness authority |
+| 2026-09-02 | Trust envelopes precede read/search output reaching a live model | Local repository prompt injection can corrupt code and evidence without any network tool |
+| 2026-09-02 | Multi-turn execution uses schema v2 while v1 remains replay-only | Existing event meanings and frozen parity evidence cannot be silently reinterpreted |
+| 2026-09-02 | Fingerprints include relevant untracked files | Release and coding work routinely includes new files; omitting them creates false freshness |
+| 2026-09-02 | Default host artifacts are declarative and grant no native privileged tools | Prompt guidance cannot enforce policy over ambient host tools |
+| 2026-09-03 | Oscillation is detected by either a repeated action signature (threshold two) or a repeated post-mutation workspace fingerprint (window six) | A single fingerprint-only check cannot cheaply catch "the model proposed the identical fix twice"; a signature-only check cannot catch a broader A-B-A cycle across different actions |
+| 2026-09-03 | The failed-fix and completion path reuses the existing exact-text-replacement work contract and rubric unchanged for the first bounded-loop demo | Proves the loop mechanics against the one task shape the harness already verifies end to end, rather than building a general acceptance-criteria evaluation engine in the same slice |
+| 2026-09-03 | A tool call counts as a workspace mutation only when its `afterFileHash` is non-null, not merely when it succeeds | Read/search tools can now succeed without mutating; conflating "succeeded" with "mutated" would trigger verification after every read |
+| 2026-09-03 | Cowork skill eligibility is an explicit opt-in frontmatter flag (`cowork-eligible: true`), default excluded | Matches the project's deny-by-default policy posture; five of six canonical skills assume build/test/security-scan execution Cowork's managed container cannot provide |
+| 2026-09-03 | `@types/vscode` is not used; a local ambient declaration covers only the consumed surface | Every version available through the configured registry mirror publishes a legacy SHA-1 integrity hash, failing this repository's own SHA-512 supply-chain gate; SPEC-004 section 6.6 anticipates exactly this fallback |
+| 2026-09-03 | The VS Code extension contributes zero global language-model tools in this release | Stricter than the specification's single-status-tool allowance; no status tool is implemented yet, and shipping a placeholder would overclaim |
+| 2026-09-03 | `check:tracked-input` and `release:digests` are separate from `npm run quality`, composed only in `release:check` | A tracked-input gate would fail on every normal work-in-progress commit if it ran inside the everyday development quality gate |
+| 2026-09-03 | `validatePrerequisites` is the single source of cross-event invariant checks for both `applySessionEvent` (live path) and `replaySession` (replay path); `replaySession` no longer duplicates checks as local variables | An invariant enforced only inside `replaySession`'s own loop is invisible to the live `AgentLoop`, which calls `applySessionEvent` directly; duplicated logic drifts apart over time as one path is fixed and the other is not |
+| 2026-09-03 | `AgentLoop`'s event-append closure validates via `applySessionEvent` before calling `eventSink.append`, not after | `applySessionEvent` is pure and throws synchronously on any invariant violation; validating first guarantees a rejected event is never durably persisted to the JSONL log |
+| 2026-09-04 | All text files are normalized to LF (`.gitattributes` plus `biome.json`'s `lineEnding: "lf"`), not CRLF | Every blob was already stored LF; CRLF was purely a Windows checkout artifact, and biome's prior `"crlf"` setting only ever matched a Windows working copy, failing `format:check` on every other CI platform |
+| 2026-09-04 | `readHostTextFile` normalizes CRLF to LF for every host-text read, not only the source side of a render | A conflict-detection hash comparison between the source and destination sides of a render must use the same normalization, or a checkout-time line-ending artifact reads as a real content conflict |
+| 2026-09-04 | Test and script fixtures resolve `os.tmpdir()` through `realpath()` before handing it to the harness, rather than relaxing `assertNoLinksInPath`'s ancestor-symlink check | `os.tmpdir()` is used nowhere in `src/`; the ancestor-symlink check is a genuine production safeguard against a redirected workspace root, and macOS's standard `/var` alias is a fixture-only concern, not a reason to weaken it |
+
+## Surprises and Discoveries
+
+- The VS Code Language Model API does not support system messages, so the existing prompt contract needs restructuring rather than a direct mapping.
+- Copilot model consent requires a user-initiated action, which constrains where model selection can occur in the extension lifecycle.
+- Cowork forbids terminal access and package installation inside its container, which makes some existing skills unrenderable for that target rather than merely degraded.
+- gstack's evidence model grades freshness against a working-tree fingerprint; the current evidence model proves a check ran but not that it still applies.
+- Independent review of the first slice found two fail-open defects that unit tests alone would not have surfaced: truthiness-based capability gates and an accessor-based validation bypass. Both are now closed and regression-tested.
+- The VS Code extension API covers more of the harness surface than expected, including MCP server discovery, secret storage, token counting, diagnostics, and Git state. It does not cover everything: workspace-wide text search, diff computation, telemetry transport, and contributed tool input validation have no usable native API, and Git state depends on an optional built-in extension. All of these are recorded as limits in SPEC-004 section 6.5 rather than solved with a package.
+- A packed install succeeds, but ordinary initialization fails because the CLI discovers its own distribution assets from the target directory. An undocumented internal package-root override works, proving packaging bytes are present but trust resolution is reversed.
+- Default generated agents currently receive native shell, edit, and web tools. Structural render success is not security readiness, and current host profiles must be treated as declarative.
+- Local quality and byte-reproducible packages are not release provenance while candidate source remains untracked and remote CI has not evaluated it.
+- Test-first development of the bounded loop surfaced three real defects that a design review alone would not have caught: `FileSessionVerificationService` called the wall clock directly instead of an injected clock, which made evidence appear stale by a few hours whenever a test used a fixed clock; the schema-v2 reducer treated any successful tool dispatch as a workspace mutation, so a pure read triggered verification; and the completion path re-verified with a fresh attempt number instead of reusing the artifact already bound to the recorded event, breaking the evidence hash binding. All three were caught by the first end-to-end happy-path test, not by unit tests of the individual functions in isolation.
+- `@types/vscode` could not be added at any version: the configured internal registry mirror serves it with only a legacy SHA-1 integrity hash for every release evaluated (1.90.0 and 1.134.0), which this repository's own supply-chain gate rejects. This is an external registry-mirror limitation, not a package-quality issue with `@types/vscode` itself.
+- `scripts/check-package.mjs` had a latent bug, exposed only once a `.d.ts`-only ambient declaration file existed under `src/`: its dist-output expectation loop assumed every `src/**/*.ts` file emits its own compiled output.
+- An independent code-review pass of the schema-v2 reducer, run after slices 6-10 were otherwise complete and green, empirically executed the compiled reducer and loop rather than only reading source, and found four further defects that unit tests written alongside the original implementation had not covered: (1) `wall_clock_exhausted` had no validation at all in `validatePrerequisites`, so a forged claim with zero elapsed time was accepted; (2) `decision_budget_exhausted` recognized only `turnsUsed >= maxTurns`, so `AgentLoop`'s legitimate stop for tool-dispatch-budget exhaustion crashed with `SessionProjectionError` on ordinary budget configurations; (3) `verification.recorded` required `workspaceMutations >= 1`, so a turn that correctly finished with zero tool calls (for example, the model determines the workspace already satisfies the objective) crashed the reducer instead of completing; (4) `evaluation.recorded` and `session.completed` validated their event-chain-head and evidence-hash bindings only inside `replaySession`'s own duplicate local-variable logic, so the same forged bindings were silently accepted when applied one event at a time through `applySessionEvent`, the path the live `AgentLoop` actually uses. All four are fixed, `replaySession` no longer duplicates invariant logic that `validatePrerequisites` now owns for both paths, and six new reducer-level tests plus two new end-to-end `AgentLoop` tests pin each scenario against regression.
+- PR #3's first remote CI run was the first time this quality workflow had ever executed on GitHub-hosted runners for this candidate, and all three OS jobs failed on their first attempt over five genuinely pre-existing, cross-platform defects that a single-OS (Windows) development environment could never have surfaced: biome hardcoded CRLF formatting while every blob is stored LF, so Ubuntu and macOS failed `format:check` entirely; the host renderer's conflict detector hashed the source side of a render with CRLF normalized away but the destination side raw, so any autocrlf-converted checkout reported an untouched, correct file as a conflict; `path.relative()` between different Windows drive letters returns its second argument unchanged rather than throwing, which two independent path-containment checks misread as containment (one fail-closed crash, one fail-open gap); macOS's standard `/var` system alias defeated an ancestor-symlink safety check for any operation rooted under `os.tmpdir()`; and a frozen test fixture recorded a stale CRLF byte sequence from its own original Windows capture. All five are fixed, and the full matrix (three OS jobs plus the package job) is green as of this session; see the 2026-09-04 session-observation entry in `ISSUE-002-log.md` for the complete root-cause analysis of each.
+
+## Artifacts and Notes
+
+- ADR: `docs/artifacts/adr/ADR-004-cross-surface-execution.md`
+- Council: `docs/artifacts/adr/COUNCIL-004-cross-surface-execution.md`
+- Spec: `docs/artifacts/specs/SPEC-004-cross-surface-execution.md`
+
+## Outcomes and Retrospective
+
+Pending. To be completed after slice 10 and independent release certification.

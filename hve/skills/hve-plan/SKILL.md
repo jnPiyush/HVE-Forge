@@ -1,0 +1,40 @@
+---
+name: hve-plan
+description: Research and plan a bounded repository change with alternatives, acceptance criteria, file-level scope, test mapping, risks, and rollback guidance.
+license: MIT
+compatibility: hve-forge >=0.2.0
+---
+
+# HVE Plan
+
+> WHEN: Planning a non-trivial feature, migration, refactor, bug fix, or multi-file change before implementation.
+
+## Decision Tree
+
+1. If requirements or authority are unclear, gather evidence and ask a focused question.
+2. If the change is trivial and mechanically verifiable, use a short inline plan.
+3. If it crosses modules, trust boundaries, or eight files, create a durable execution plan.
+4. If architecture or public contracts change, require an ADR before implementation.
+
+## Core Rules
+
+- Read existing code, tests, decisions, and repository instructions first.
+- Express non-trivial work as `urn:hve-forge:schema:v1:work-contract`; do not invent
+  alternate contract fields when the schema is available.
+- State assumptions and compare at least two viable approaches.
+- Identify reuse before proposing new abstractions.
+- Map each acceptance criterion to a named verification method.
+- Include failure, recovery, and rollback paths.
+
+## Error Handling
+
+Do not guess through unresolved requirements, missing security ownership, or contradictory artifacts. Record the blocker and the smallest question that can resolve it.
+
+## Checklist
+
+- [ ] Scope and non-goals are explicit.
+- [ ] The work contract is schema-valid, active, and identifies every blocking criterion.
+- [ ] Alternatives and decision rationale are recorded.
+- [ ] Files, interfaces, and migrations are named.
+- [ ] Tests and runtime evidence map to acceptance criteria.
+- [ ] Risks, dependencies, and rollback are actionable.

@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hve-forge:schema:v1:evaluation",
+  "title": "HVE Forge Evaluation Run v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "evaluationId",
+    "runId",
+    "evaluatorId",
+    "rubricVersion",
+    "capabilities",
+    "projectionHash",
+    "workspaceHash",
+    "eventChainHead",
+    "evidenceHashes",
+    "scores",
+    "findings",
+    "verdict",
+    "startedAt",
+    "endedAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "evaluationId": { "$ref": "#/$defs/id" },
+    "runId": { "$ref": "#/$defs/id" },
+    "evaluatorId": { "$ref": "#/$defs/id" },
+    "rubricVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["readOnly", "filesystemWrite", "process", "network", "provider", "approval", "secret"],
+      "properties": {
+        "readOnly": { "const": true },
+        "filesystemWrite": { "const": false },
+        "process": { "const": false },
+        "network": { "const": false },
+        "provider": { "const": false },
+        "approval": { "const": false },
+        "secret": { "const": false }
+      }
+    },
+    "projectionHash": { "$ref": "#/$defs/sha256" },
+    "workspaceHash": { "$ref": "#/$defs/sha256" },
+    "eventChainHead": { "$ref": "#/$defs/sha256" },
+    "evidenceHashes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1024,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/sha256" }
+    },
+    "scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "requirements_fit": { "$ref": "#/$defs/score" },
+        "design_conformance": { "$ref": "#/$defs/score" },
+        "logic": { "$ref": "#/$defs/score" },
+        "tests": { "$ref": "#/$defs/score" },
+        "security_privacy": { "$ref": "#/$defs/score" },
+        "reliability": { "$ref": "#/$defs/score" },
+        "maintainability": { "$ref": "#/$defs/score" },
+        "scope_simplicity": { "$ref": "#/$defs/score" },
+        "performance_resources": { "$ref": "#/$defs/score" },
+        "operability": { "$ref": "#/$defs/score" }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "maxItems": 512,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["findingId", "severity", "summary", "evidenceReferences", "waived"],
+        "properties": {
+          "findingId": { "$ref": "#/$defs/id" },
+          "severity": { "enum": ["critical", "high", "medium", "low", "informational"] },
+          "summary": { "type": "string", "minLength": 1, "maxLength": 8192 },
+          "evidenceReferences": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 128,
+            "items": { "type": "string", "minLength": 1, "maxLength": 1024 }
+          },
+          "waived": { "type": "boolean" },
+          "waiverReference": { "type": ["string", "null"], "maxLength": 1024 }
+        }
+      }
+    },
+    "verdict": { "enum": ["approved", "changes_requested", "blocked"] },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "endedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score", "evidenceReferences"],
+      "properties": {
+        "score": { "type": "integer", "minimum": 0, "maximum": 5 },
+        "evidenceReferences": {
+          "type": "array",
+          "maxItems": 128,
+          "items": { "type": "string", "minLength": 1, "maxLength": 1024 }
+        }
+      }
+    }
+  }
+}
